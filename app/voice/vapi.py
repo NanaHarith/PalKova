@@ -63,7 +63,9 @@ class LiveCall:
         return bool(self.control_url) and await self.vapi.control(self.control_url, body)
 
     async def hangup(self) -> None:
-        await self._control({"type": "end-call"})
+        """Always a spoken goodbye, then the line drops once it has played."""
+        await self._control({"type": "say", "endCallAfterSpoken": True,
+                             "content": f"Thanks for calling {restaurant()['name']}. Goodbye!"})
 
     async def transfer(self) -> bool:
         return await self._control({"type": "transfer", "content": "Putting you through now.",
