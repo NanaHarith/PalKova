@@ -38,6 +38,9 @@ class Settings:
     supabase_url: str = ""
     supabase_service_role_key: str = ""
     db_snapshot_bucket: str = ""
+    vapi_api_key: str = ""
+    vapi_public_key: str = ""
+    vapi_webhook_secret: str = ""
 
 
 @cache

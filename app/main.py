@@ -27,6 +27,7 @@ from app.storage import DbSnapshot
 from app.subscription import subscription_handlers
 from app.voice.limits import CallSlots
 from app.voice.tools import MAX_TEXTS_PER_NUMBER, TEXT_WINDOW_SECONDS
+from app.voice.vapi import Vapi, router as vapi_router
 from app.webhooks import handle_paypal_webhook, order_handlers
 
 log = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ class _NoSms:
     """Stand-in when Twilio credentials are not configured."""
 
     def send(self, to: str, body: str) -> None:
-        log.warning("sms not configured; dropped message to %s", to)
+        log.warning("sms not configured; dropped a message")
 
 
 class CaptureBody(BaseModel):
@@ -147,7 +148,9 @@ def create_app(settings: Settings | None = None, paypal=None, sms=None, llm=None
     app.state.tz = s.restaurant_tz
     app.state.call_slots = CallSlots()
     app.state.text_limiter = RateLimiter(MAX_TEXTS_PER_NUMBER, TEXT_WINDOW_SECONDS)
+    app.state.vapi, app.state.vapi_calls = Vapi(s.vapi_public_key), {}
     app.include_router(owner_router)
+    app.include_router(vapi_router)
     app.router.routes.extend(agent_app.routes)  # a Mount would 307 POST /mcp to /mcp/
 
     def capture(pid: str) -> dict:
