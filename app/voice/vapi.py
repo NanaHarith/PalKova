@@ -236,7 +236,9 @@ def _start_web_call(app, ip: str) -> dict:
     app.state.vapi_calls[cid] = live
     if live.control_url:
         hub.register(cid, live)
-    return {"web_call_url": call["webCallUrl"], "call_id": cid, "stream_token": live.stream_token}
+    # The room is private: joining needs the call's own room token (scoped to this one call).
+    return {"web_call_url": call["webCallUrl"], "call_token": (call.get("transport") or {}).get("callToken"),
+            "call_id": cid, "stream_token": live.stream_token}
 
 
 @router.post("/api/voice/web/start")

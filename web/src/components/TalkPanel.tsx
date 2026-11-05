@@ -71,7 +71,8 @@ export default function TalkPanel({ line, clientId }: { line: LineState | null; 
     });
     call.current = v;
     try {
-      await v.reconnect({ webCallUrl: web.web_call_url, id: web.call_id });
+      await v.reconnect({ webCallUrl: web.web_call_url, id: web.call_id,
+        ...(web.call_token ? { transport: { callToken: web.call_token } } : {}) });
     } catch {
       setPhase("error");
     }
