@@ -1,4 +1,5 @@
-"""Supabase Storage: keeps a copy of the SQLite file so state survives Render restarts (no persistent disk)."""
+"""Supabase Storage: keeps a copy of the SQLite file so state survives restarts on a host with no persistent disk.
+Off unless DB_SNAPSHOT_BUCKET is set; a host with a volume does not need it."""
 import hashlib
 import logging
 import sqlite3

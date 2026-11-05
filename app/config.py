@@ -1,4 +1,4 @@
-"""Settings from the environment (.env locally, env vars on Render) and the restaurant config file."""
+"""Settings from the environment (.env locally, env vars on the host) and the restaurant config file."""
 import json
 import os
 from dataclasses import dataclass, fields
@@ -42,7 +42,7 @@ class Settings:
 
 @cache
 def get_settings() -> Settings:
-    load_dotenv(ROOT / ".env")  # real env vars (Render) win over .env
+    load_dotenv(ROOT / ".env")  # real env vars win over .env
     return Settings(**{f.name: os.environ.get(f.name.upper()) or f.default for f in fields(Settings)})
 
 

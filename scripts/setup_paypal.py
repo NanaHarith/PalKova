@@ -6,7 +6,7 @@ Run once from the repo root, after the app is deployed and PUBLIC_BASE_URL point
 
 Reads PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET and PUBLIC_BASE_URL from .env / the environment.
 The product and plan are created fresh on every run. The webhook is reused when one already exists
-for the same URL (PayPal rejects duplicates), with its event list replaced by EVENTS. Paste the two printed lines into .env and Render env.
+for the same URL (PayPal rejects duplicates), with its event list replaced by EVENTS. Paste the two printed lines into .env and the host's environment.
 """
 import json
 import sys
@@ -57,7 +57,7 @@ def main() -> None:
     else:
         hook = paypal.request("POST", "/v1/notifications/webhooks", {"url": url, "event_types": events})
 
-    print("Paste these two lines into .env and the Render environment:")
+    print("Paste these two lines into .env and the host's environment:")
     print(f"PAYPAL_PLAN_ID={plan_id}")
     print(f"PAYPAL_WEBHOOK_ID={hook['id']}")
 

@@ -43,7 +43,14 @@ PayPal webhooks and return links need a public HTTPS URL in `PUBLIC_BASE_URL`.
 
 ## Deploy
 
-[`render.yaml`](render.yaml) describes the service. Create a Blueprint from this repo and fill in the variables marked `sync: false`, then run `python -m scripts.setup_paypal` once with the deployed `PUBLIC_BASE_URL`. It creates the catalog product, billing plan and webhook and prints their ids; set `PAYPAL_PLAN_ID` and `PAYPAL_WEBHOOK_ID`.
+The [`Dockerfile`](Dockerfile) builds the web app and the Python service; any host that runs a container with a persistent volume will do. The live demo runs on Railway:
+
+1. Create a service from this repo. Railway builds the Dockerfile.
+2. Attach a volume (for example at `/data`) and set `DATABASE_PATH=/data/palkova.db`. SQLite lives there, so it survives redeploys.
+3. Set the variables from `.env.example`, a long random `SESSION_SECRET`, and `PUBLIC_BASE_URL` to the service's HTTPS URL. Leave `DB_SNAPSHOT_BUCKET` blank; it is only for hosts without a disk.
+4. Run `python -m scripts.setup_paypal` once with the deployed `PUBLIC_BASE_URL`. It creates the catalog product, billing plan and webhook and prints their ids; set `PAYPAL_PLAN_ID` and `PAYPAL_WEBHOOK_ID`.
+
+Run one instance only: call slots and rate limits are kept in memory.
 
 ## Licence
 

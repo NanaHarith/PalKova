@@ -114,7 +114,7 @@ def create_app(settings: Settings | None = None, paypal=None, sms=None, llm=None
     agent = build_mcp(AgentTools(s, paypal, RateLimiter()))
     agent_app = agent.streamable_http_app(
         stateless_http=True, json_response=True,
-        # public no-auth endpoint behind Render's host; rebinding protection guards localhost servers
+        # public no-auth endpoint behind the host's proxy; rebinding protection guards localhost servers
         transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False))
 
     @asynccontextmanager
