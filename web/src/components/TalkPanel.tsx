@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import Vapi from "@vapi-ai/web";
+import VapiModule from "@vapi-ai/web";
+
+// The SDK is CommonJS with its class on exports.default; depending on the bundler's interop the
+// default import is either the class or the exports object. Take the class either way.
+const Vapi = ((VapiModule as unknown as { default?: typeof VapiModule }).default ?? VapiModule) as typeof VapiModule;
+type Vapi = InstanceType<typeof VapiModule>;
 import { ApiError, money, startWebCall, type Cart, type LineState, type PaymentReady } from "../api";
 import PayPanel from "./PayPanel";
 import { MicIcon } from "../icons";
@@ -60,17 +65,17 @@ export default function TalkPanel({ line, clientId }: { line: LineState | null; 
     es.addEventListener("ended", () => es.close());
     feed.current = es;
 
-    // The call already exists server-side; the SDK only joins its room, so it needs no API key.
-    const v = new Vapi("server-created-call");
-    v.on("call-start", () => setPhase("live"));
-    v.on("call-end", () => setPhase((p) => (p === "error" ? p : "ended")));
-    v.on("error", () => setPhase("error"));
-    v.on("message", (m: Transcript) => {
-      if (m.type === "transcript" && m.transcriptType === "final" && m.transcript)
-        add(m.role === "user" ? "you" : "us", m.transcript);
-    });
-    call.current = v;
     try {
+      // The call already exists server-side; the SDK only joins its room, so it needs no API key.
+      const v = new Vapi("server-created-call");
+      v.on("call-start", () => setPhase("live"));
+      v.on("call-end", () => setPhase((p) => (p === "error" ? p : "ended")));
+      v.on("error", () => setPhase("error"));
+      v.on("message", (m: Transcript) => {
+        if (m.type === "transcript" && m.transcriptType === "final" && m.transcript)
+          add(m.role === "user" ? "you" : "us", m.transcript);
+      });
+      call.current = v;
       await v.reconnect({ webCallUrl: web.web_call_url, id: web.call_id,
         ...(web.call_token ? { transport: { callToken: web.call_token } } : {}) });
     } catch {
