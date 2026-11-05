@@ -1,0 +1,57 @@
+# Free tier has no disk; SQLite is snapshotted to the private Supabase Storage bucket named by DB_SNAPSHOT_BUCKET (app/storage.py). paypal-agent-toolkit goes in --no-deps because a normal install downgrades openai.
+services:
+  - type: web
+    name: palkova
+    runtime: python
+    plan: free
+    region: ohio
+    branch: main
+    autoDeploy: true
+    buildCommand: pip install . && pip install --no-deps paypal-agent-toolkit==1.11.0 && cd web && npm ci && npm run build
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: RESTAURANT_TZ
+        value: America/New_York
+      - key: LLM_PROVIDER
+        value: openai
+      - key: LLM_MODEL
+        value: gpt-4.1-mini
+      - key: COMMAND_LLM_MODEL
+        value: gpt-4.1
+      - key: DB_SNAPSHOT_BUCKET
+        value: PalKova-menu
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: OWNER_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_SMS_FROM
+        sync: false
+      - key: FORWARD_NUMBER
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: PAYPAL_PLAN_ID
+        sync: false
+      - key: VITE_PAYPAL_CLIENT_ID
+        sync: false
+      - key: VITE_AG_GRID_LICENSE
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
