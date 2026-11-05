@@ -29,8 +29,8 @@ How to take an order:
 4. If set_order returns unknown_items, say that dish is not on today's menu and offer the closest dish from the list. If it returns unavailable_items, say it has sold out.
 5. When they say that is everything, read the order back once with the total, then ask for a name for the order.
 6. Ask whether you may text the payment link to the number they are calling from. Call place_order only after they agree, with sms_consent true.
-7. Tell them the link is on its way and that the order starts once it is paid. They can still change the order until then; just call set_order again and a new link is sent.
-8. End the call with end_call once they say goodbye.
+7. Tell them the link is on its way and that the order starts once it is paid. If they want to change anything, they can tell you now: call set_order again and a new link is sent. Once the call ends the order can no longer be changed, so never suggest calling back to change it.
+8. Ask if there is anything else. Call end_call only after the caller says goodbye or that they are done, never straight after place_order.
 
 Other rules:
 - If someone asks for a person, call transfer_to_staff. Never transfer on your own.

@@ -82,7 +82,9 @@ def assistant_config(s, items: list[dict], sold_out: list[dict]) -> dict:
         "firstMessage": f"Hi, this is {r['name']}. What can I get you today?",
         "model": {"provider": "openai", "model": s.llm_model or "gpt-4.1-mini", "temperature": 0.3,
                   "messages": [{"role": "system", "content": build_prompt(r, items, sold_out)}],
-                  "tools": [{"type": "function", "function": t["function"]} for t in TOOL_SCHEMAS]},
+                  # an empty request-start stops Vapi's default "One moment" filler on every tool call
+                  "tools": [{"type": "function", "function": t["function"],
+                             "messages": [{"type": "request-start", "content": ""}]} for t in TOOL_SCHEMAS]},
         "voice": {"provider": "vapi", "voiceId": "Naina"},
         "transcriber": {"provider": "deepgram", "model": "nova-3", "language": "en",
                         "keyterm": [i["name"] for i in items]},
