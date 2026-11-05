@@ -9,7 +9,8 @@ log = logging.getLogger(__name__)
 
 
 def payment_link_text(restaurant: str, number: str, total_cents: int, url: str) -> str:
-    return f"{restaurant}: pay for order #{number} ({cents_to_str(total_cents)}) — {url}. Reply STOP to opt out."
+    # The link goes last, alone on its line: phones take trailing punctuation into the link and break the token.
+    return f"{restaurant}: pay for order #{number} ({cents_to_str(total_cents)}). Reply STOP to opt out.\n{url}"
 
 
 def paid_text(restaurant: str, number: str, minutes: int) -> str:
