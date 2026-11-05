@@ -24,6 +24,7 @@ from app.voice.prompt import build_prompt
 from app.voice.tools import TOOL_SCHEMAS, Conversation, VoiceTools
 
 log = logging.getLogger(__name__)
+logging.getLogger("httpx").setLevel(logging.WARNING)  # httpx logs every request URL at INFO, control URLs included
 
 WEBHOOK_PATH = "/voice/vapi"
 SECRET_HEADER = "X-Vapi-Secret"
