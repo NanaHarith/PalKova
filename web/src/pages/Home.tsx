@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getLine, getPublicMenu, type LineState, type PublicItem } from "../api";
+import { getConfig, getLine, getPublicMenu, type LineState, type PublicItem } from "../api";
+import TalkPanel from "../components/TalkPanel";
 import MenuBoard from "../components/MenuBoard";
 import biryani from "../photos/biryani.jpg";
 import kothu from "../photos/kothu-parotta.jpg";
@@ -45,6 +46,7 @@ const Arrow = () => (
 export default function Home() {
   const [line, setLine] = useState<LineState | null>(null);
   const [menu, setMenu] = useState<PublicItem[] | null>(null);
+  const [clientId, setClientId] = useState("");
 
   useEffect(() => {
     document.title = "Kaveri Kitchen";
@@ -53,6 +55,7 @@ export default function Home() {
     theme?.setAttribute("content", "#0D4F52");
     getLine().then(setLine).catch(() => setLine({ active: false, restaurant: "Kaveri Kitchen", ready_minutes: 20, busy: false }));
     getPublicMenu().then(setMenu).catch(() => setMenu([]));
+    getConfig().then((c) => setClientId(c.paypal_client_id)).catch(() => {});
     return () => { if (was) theme?.setAttribute("content", was); };
   }, []);
   const closed = line !== null && !line.active;
@@ -77,6 +80,7 @@ export default function Home() {
         </div>
         <div className="counter-col">
           {!closed && <div className="order-here" aria-hidden="true"><span>Order<br />here</span><Arrow /></div>}
+          <TalkPanel line={line} clientId={clientId} />
           <div className="ledge"><Tumbler /></div>
           {line?.active && <a className="counter-call" href="tel:+13502503546">Or call <span className="num">+1 350-250-3546</span></a>}
         </div>

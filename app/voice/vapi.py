@@ -1,19 +1,25 @@
-"""Vapi phone channel: one webhook maps Vapi's server messages onto VoiceTools.
+"""Vapi voice channels: one webhook maps Vapi's server messages onto VoiceTools.
 
-The phone number carries no assistant, so every inbound call starts with an assistant-request: the line gate
-and call limits run there, and a refused call hears the error text. Calls are steered through each call's
-control URL, which can hang up or transfer the call: it is never logged and never sent to a browser."""
+Phone: the number carries no assistant, so every inbound call starts with an assistant-request: the line gate
+and call limits run there, and a refused call hears the error text.
+Web: the server creates the call after the same gate and hands the browser only the call's room URL and an
+event-stream token. No Vapi key reaches the browser.
+Calls are steered through each call's control URL, which can hang up or transfer the call: it is never logged
+and never sent to a browser."""
 
 import asyncio
 import hmac
 import json
 import logging
+import secrets
 import time
 from dataclasses import dataclass
 
 import httpx
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi.responses import StreamingResponse
 
+from app.agent_mcp import RateLimiter
 from app.config import restaurant
 from app.db import connect, now_utc, tx
 from app.events import hub
@@ -30,13 +36,23 @@ WEBHOOK_PATH = "/voice/vapi"
 SECRET_HEADER = "X-Vapi-Secret"
 PARAMS = {t["function"]["name"]: list(t["function"]["parameters"]["properties"]) for t in TOOL_SCHEMAS}
 SWEEP_AFTER_SECONDS = MAX_CALL_SECONDS + 120  # a call whose end message never came
+WEB_CALLS_PER_IP = 5  # per hour
+HEARTBEAT_SECONDS = 15
 
 router = APIRouter()
 
 
 class Vapi:
     def __init__(self, public_key: str):
-        self.public_key = public_key  # control URLs require it once controlAuthenticationEnabled is on
+        # Server-side only: it creates web calls and authenticates control requests
+        # (controlAuthenticationEnabled). The browser never receives it.
+        self.public_key = public_key
+
+    def create_web_call(self, assistant: dict) -> dict:
+        r = httpx.post("https://api.vapi.ai/call/web", json={"assistant": assistant}, timeout=15,
+                       headers={"Authorization": f"Bearer {self.public_key}"})
+        r.raise_for_status()
+        return r.json()
 
     async def control(self, url: str, body: dict) -> bool:
         try:
@@ -58,6 +74,13 @@ class LiveCall:
     started: float
     tools: VoiceTools | None = None
     control_url: str | None = None
+    stream_token: str | None = None  # web only: the page's key to this call's events
+    events: asyncio.Queue | None = None
+
+    async def push(self, kind: str, data: dict) -> None:
+        """cart / payment_ready to the page; a phone call has no page."""
+        if self.events is not None:
+            self.events.put_nowait((kind, data))
 
     async def _control(self, body: dict) -> bool:
         return bool(self.control_url) and await self.vapi.control(self.control_url, body)
@@ -78,15 +101,16 @@ class LiveCall:
                              "triggerResponseEnabled": False})
 
 
-def assistant_config(s, items: list[dict], sold_out: list[dict]) -> dict:
+def assistant_config(s, items: list[dict], sold_out: list[dict], channel: str = "phone") -> dict:
     r = restaurant()
+    schemas = [t for t in TOOL_SCHEMAS if channel == "phone" or t["function"]["name"] != "transfer_to_staff"]
     return {
         "firstMessage": f"Hi, this is {r['name']}. What can I get you today?",
         "model": {"provider": "openai", "model": s.llm_model or "gpt-4.1-mini", "temperature": 0.3,
-                  "messages": [{"role": "system", "content": build_prompt(r, items, sold_out)}],
+                  "messages": [{"role": "system", "content": build_prompt(r, items, sold_out, channel)}],
                   # an empty request-start stops Vapi's default "One moment" filler on every tool call
                   "tools": [{"type": "function", "function": t["function"],
-                             "messages": [{"type": "request-start", "content": ""}]} for t in TOOL_SCHEMAS]},
+                             "messages": [{"type": "request-start", "content": ""}]} for t in schemas]},
         "voice": {"provider": "vapi", "voiceId": "Naina"},
         "transcriber": {"provider": "deepgram", "model": "nova-3", "language": "en",
                         "keyterm": [i["name"] for i in items]},
@@ -95,6 +119,8 @@ def assistant_config(s, items: list[dict], sold_out: list[dict]) -> dict:
                    "headers": {SECRET_HEADER: s.vapi_webhook_secret}},
         "serverMessages": ["tool-calls", "status-update", "end-of-call-report"],
         "monitorPlan": {"controlEnabled": True, "controlAuthenticationEnabled": True},
+        # what the browser hears about its own call: words and status, never tool calls or their arguments
+        "clientMessages": ["transcript", "status-update", "speech-update"],
     }
 
 
@@ -142,6 +168,8 @@ def _end(app, cid: str | None) -> None:
         return
     app.state.call_slots.release()
     hub.unregister(cid)
+    if live.events is not None:
+        live.events.put_nowait(None)  # closes the page's event stream
     conn = connect(app.state.settings.database_path)
     try:
         with tx(conn):
@@ -164,6 +192,78 @@ async def _run_tool(live: LiveCall | None, tc: dict) -> dict:
     except (ValueError, TypeError):  # bad JSON, or a required argument missing
         result = {"error": "bad_arguments"}
     return {"name": name, "toolCallId": tc.get("id"), "result": json.dumps(result)}
+
+
+def _client_ip(request: Request) -> str:
+    # First X-Forwarded-For hop is client-spoofable; fine for a demo limiter (same as the MCP channel)
+    if fwd := request.headers.get("x-forwarded-for"):
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _start_web_call(app, ip: str) -> dict:
+    s = app.state.settings
+    conn = connect(s.database_path)
+    try:
+        if not line_is_active(conn):
+            raise HTTPException(403, "line_inactive")
+        items, sold_out = menu_for_prompt(conn, s.restaurant_tz)
+    finally:
+        conn.close()
+    if not app.state.web_call_limiter.hit(ip):
+        raise HTTPException(429, "too_many_calls")
+    if not app.state.call_slots.acquire():
+        raise HTTPException(409, "busy")
+    try:
+        call = app.state.vapi.create_web_call(assistant_config(s, items, sold_out, "web"))
+    except httpx.HTTPError as e:  # the exception text may carry URLs: log the type only
+        app.state.call_slots.release()
+        log.warning("vapi web call create failed: %s", type(e).__name__)
+        raise HTTPException(502, "call_failed")
+    cid = call["id"]
+    conn = connect(s.database_path)
+    try:
+        with tx(conn):
+            conn.execute("INSERT OR IGNORE INTO conversations (id, channel, from_number, started_at) "
+                         "VALUES (?, 'web', NULL, ?)", (cid, now_utc()))
+    finally:
+        conn.close()
+    live = LiveCall(Conversation(cid, "web"), app.state.vapi, s.forward_number, time.monotonic(),
+                    control_url=(call.get("monitor") or {}).get("controlUrl"),
+                    stream_token=secrets.token_urlsafe(24), events=asyncio.Queue())
+    live.tools = VoiceTools(lambda: connect(s.database_path), app.state.paypal, app.state.sms, restaurant(), s,
+                            live.push, live.hangup, None, app.state.text_limiter)
+    app.state.vapi_calls[cid] = live
+    if live.control_url:
+        hub.register(cid, live)
+    return {"web_call_url": call["webCallUrl"], "call_id": cid, "stream_token": live.stream_token}
+
+
+@router.post("/api/voice/web/start")
+async def web_call_start(request: Request):
+    return await asyncio.to_thread(_start_web_call, request.app, _client_ip(request))
+
+
+@router.get("/api/voice/web/events/{token}")
+async def web_call_events(token: str, request: Request):
+    live = next((c for c in request.app.state.vapi_calls.values()
+                 if c.stream_token and hmac.compare_digest(c.stream_token, token)), None)
+    if live is None:
+        raise HTTPException(404)
+
+    async def stream():
+        while True:
+            try:
+                item = await asyncio.wait_for(live.events.get(), HEARTBEAT_SECONDS)
+            except asyncio.TimeoutError:
+                yield ": ping\n\n"
+                continue
+            if item is None:
+                yield "event: ended\ndata: {}\n\n"
+                return
+            kind, data = item
+            yield f"event: {kind}\ndata: {json.dumps(data)}\n\n"
+    return StreamingResponse(stream(), media_type="text/event-stream")
 
 
 @router.post(WEBHOOK_PATH)

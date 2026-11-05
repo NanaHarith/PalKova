@@ -101,6 +101,9 @@ export type PaymentReady = { order_number: string; paypal_order_id: string; tota
 export type CaptureResult = { result: string; order_number: string | null; status: Status | null };
 
 export const getPublicMenu = () => req<PublicItem[]>("/api/public/menu");
+// The server creates the call after its checks; the page gets the call's room and its event-stream key, no API key.
+export type WebCall = { web_call_url: string; call_id: string; stream_token: string };
+export const startWebCall = () => req<WebCall>("/api/voice/web/start", { method: "POST" });
 export const getConfig = () => req<{ paypal_client_id: string; plan_id: string }>("/api/config");
 export const capture = (paypal_order_id: string) =>
   req<CaptureResult>("/api/pay/capture", { method: "POST", body: JSON.stringify({ paypal_order_id }) });
