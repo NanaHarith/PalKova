@@ -333,10 +333,14 @@ html:has(.home) { scrollbar-color: #C9951A #0A3F42; }
 
 /* Chalk on the wall above the slip: how to pay without an account, and that it is all sandbox. */
 .chalk {
-  margin: 24px 6px 0; padding: 4px 0 4px 16px; border-left: 4px solid var(--mustard);
-  color: var(--wall-text); font-size: 16px; line-height: 1.5;
+  margin: 26px 6px 0; color: var(--wall-text); font-size: 16px; line-height: 1.5;
 }
 .chalk p { margin: 0; }
+/* The question is signwritten on the wall in mustard, like the counter's own lettering. */
+.chalk p:first-child > b:first-child {
+  display: block; margin-bottom: 4px; font-family: var(--sign); font-weight: 400; font-size: 24px; line-height: 1.1;
+  text-transform: uppercase; letter-spacing: 0.03em; color: var(--mustard);
+}
 .chalk p + p { margin-top: 10px; color: var(--wall-dim); font-size: 15px; }
 .chalk b { color: var(--cream); font-weight: 700; }
 .card-no { color: var(--mustard); font-weight: 700; white-space: nowrap; user-select: all; }
