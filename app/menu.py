@@ -151,7 +151,7 @@ def resolve_item(
         hits = [i for i in items if step(i)]
         if len(hits) == 1:
             return hits[0]
-    # First-best difflib hit; ties across items are not detected
+    # First-best difflib hit; ties across items are not detected. Above 0.82 so a bare "chicken" is not "chicken 65"
     names = {_norm(n): i for i in items for n in [i["name"], *i["aliases"]]}
-    close = difflib.get_close_matches(norm, list(names), n=1, cutoff=0.82)
+    close = difflib.get_close_matches(norm, list(names), n=1, cutoff=0.83)
     return names[close[0]] if close else None

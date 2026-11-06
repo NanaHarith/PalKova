@@ -3,14 +3,14 @@ import { getConfig, getLine, getPublicMenu, type LineState, type PublicItem } fr
 import TalkPanel from "../components/TalkPanel";
 import MenuBoard from "../components/MenuBoard";
 import biryani from "../photos/biryani.jpg";
-import kothu from "../photos/kothu-parotta.jpg";
+import butterChicken from "../photos/butter-chicken.jpg";
 import lassi from "../photos/mango-lassi.jpg";
 import "../home.css";
 
 // Prints pinned to the wall. Licences and sources: src/photos/CREDITS.md.
 const PRINTS = [
   { src: biryani, alt: "Biryani with egg and raita, served on a banana leaf", caption: "Biryani on a banana leaf" },
-  { src: kothu, alt: "Close-up of kothu parotta on a steel plate", caption: "Kothu parotta, off the griddle" },
+  { src: butterChicken, alt: "Butter chicken in a white dish with a basket of naan behind it", caption: "Butter chicken and naan" },
   { src: lassi, alt: "Mango lassi seen from above, with a straw", caption: "Mango lassi" },
 ];
 
@@ -123,7 +123,7 @@ export default function Home() {
         <p className="credits">
           Photos via Wikimedia Commons, resized and cropped:{" "}
           <a href="https://commons.wikimedia.org/wiki/File:Ambur_Mutton_Briyani.jpg">Sreenorainee</a> and{" "}
-          <a href="https://commons.wikimedia.org/wiki/File:Chicken_Kothu_Parotta.jpg">Thamizhpparithi Maari</a>,{" "}
+          <a href="https://commons.wikimedia.org/wiki/File:CreamyButterChicken.jpg">Amar Nath Adak</a>,{" "}
           <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>;{" "}
           <a href="https://commons.wikimedia.org/wiki/File:Mango_Lassi_.jpg">Misaochan</a>,{" "}
           <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>.

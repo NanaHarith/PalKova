@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { money, type PublicItem } from "../api";
 
-const ORDER = ["Starters", "Breads", "Drinks", "Desserts", "Mains"];  // Mains get the right-hand column to themselves
+const ORDER = ["Starters", "Breads", "Drinks", "Mains", "Desserts"];
+const RIGHT = ["Mains", "Desserts"];  // the right-hand column: mains, with desserts beneath to even out the board
 const TAG: Record<string, string> = {
   veg: "Veg", vegan: "Vegan", egg: "Egg", gluten: "Gluten", contains_dairy: "Dairy", contains_nuts: "Nuts",
 };
@@ -29,7 +30,7 @@ export default function MenuBoard({ items }: { items: PublicItem[] | null }) {
       <p className="board-sub">Tax is added on your ticket. Dishes struck through in red are finished for today.</p>
       {!items && <p className="board-sub">Lettering the board…</p>}
       <div className="board-cols">
-        {[cats.filter((c) => c !== "Mains"), cats.filter((c) => c === "Mains")].map((col, k) => (
+        {[cats.filter((c) => !RIGHT.includes(c)), cats.filter((c) => RIGHT.includes(c))].map((col, k) => (
           <div className="board-col" key={k}>
           {col.map((c) => (
           <div className={`board-cat cat-${c.toLowerCase()}`} key={c}>
