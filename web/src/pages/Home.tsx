@@ -68,7 +68,7 @@ export default function Home() {
           <div className="sign">
             <span className="screw tl" /><span className="screw tr" /><span className="screw bl" /><span className="screw br" />
             <h1>Kaveri<br />Kitchen</h1>
-            <p className="sign-line">South Indian cooking, and the dishes our regulars asked for. Pickup only.</p>
+            <p className="sign-line">Indian cooking from the stove and the tandoor. Pickup only.</p>
           </div>
           <ul className="plaques">
             <li className="plaque plaque-red">Pickup only</li>
@@ -88,12 +88,13 @@ export default function Home() {
 
       <div className="lower">
       <section className="story" aria-labelledby="story-title">
-        <h2 id="story-title">A short board and a hot griddle</h2>
+        <h2 id="story-title">A long board and a hot tandoor</h2>
         <div className="story-body">
           <p>
-            Kaveri Kitchen is a small pickup counter that cooks the way a Chennai mess does: a short board, a hot griddle,
-            and food that comes out fast. The South Indian dishes are the ones we grew up eating. The others arrived with
-            our regulars, one request at a time, until the board needed a second column.
+            Kaveri Kitchen is a small pickup counter that cooks the way a busy Indian kitchen does: biryani and curries
+            off the stove, kebabs and naan straight out of the tandoor, and food that comes out fast. We started with a
+            handful of dishes from home. The rest arrived with our regulars, one request at a time, until the board
+            needed a second column.
           </p>
           <p>
             Ordering works like the counter does. Tell us what you want, out loud, and we write the ticket as you speak.
