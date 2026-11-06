@@ -305,6 +305,49 @@ html:has(.home) { scrollbar-color: #C9951A #0A3F42; }
 .foot .credits { flex-basis: 100%; font-size: 13px; }
 .foot .credits a { color: var(--wall-dim); font-weight: 400; }
 
+/* ---------- Pay page (texted link): one order slip pinned under a small sign ---------- */
+.paypage { min-height: 100vh; min-height: 100dvh; }
+.slip-wrap { max-width: 460px; margin: 0 auto; padding: 32px 16px 56px; }
+.slip-sign {
+  position: relative; background: var(--cream); border: 8px solid var(--red); border-radius: 4px;
+  padding: 22px 24px 18px; text-align: center;
+}
+.slip-sign h1 { font-size: clamp(40px, 12vw, 54px); line-height: 0.95; color: var(--red); letter-spacing: 0.01em; }
+.slip-sign p { margin: 8px 0 0; font-size: 16px; font-weight: 600; color: var(--ink-2); letter-spacing: 0.02em; }
+
+/* The slip swings onto its tack and settles straight (the card form inside must not render askew),
+   with a torn zigzag foot like a bill pad. */
+.slip {
+  position: relative; margin: 30px 6px 0; padding: 22px 20px 30px; min-height: 0;
+  filter: drop-shadow(0 12px 14px rgb(0 0 0 / 0.35));
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 9px) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 18px 9px repeat-x;
+  mask: linear-gradient(#000 0 0) top / 100% calc(100% - 9px) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 18px 9px repeat-x;
+}
+.slip .tack { top: 8px; }
+.slip-no { margin: 6px 0 12px; font-family: var(--sign); font-size: 26px; text-transform: uppercase; letter-spacing: 0.03em; }
+.slip .pay-head { display: none; }  /* the slip already names the order and its total */
+.slip .ticket-empty { margin: 18px 0 6px; }
+.slip-note { margin: 16px 0 0; }
+
+/* Chalk on the wall above the slip: how to pay without an account, and that it is all sandbox. */
+.chalk {
+  margin: 24px 6px 0; padding: 4px 0 4px 16px; border-left: 4px solid var(--mustard);
+  color: var(--wall-text); font-size: 16px; line-height: 1.5;
+}
+.chalk p { margin: 0; }
+.chalk p + p { margin-top: 10px; color: var(--wall-dim); font-size: 15px; }
+.chalk b { color: var(--cream); font-weight: 700; }
+.card-no { color: var(--mustard); font-weight: 700; white-space: nowrap; user-select: all; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .chalk { animation: chalk-in 500ms var(--ease-out) 100ms both; }
+  .slip { animation: hang 620ms var(--ease-out) 300ms both; }
+}
+@keyframes hang { from { opacity: 0; transform: translateY(-18px) rotate(2.5deg); } }
+@keyframes chalk-in { from { opacity: 0; transform: translateX(-8px); } }
+
 /* ---------- Widths ---------- */
 @media (max-width: 1100px) {
   .order-here { display: none; }

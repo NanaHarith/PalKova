@@ -108,4 +108,12 @@ export const getConfig = () => req<{ paypal_client_id: string; plan_id: string }
 export const capture = (paypal_order_id: string) =>
   req<CaptureResult>("/api/pay/capture", { method: "POST", body: JSON.stringify({ paypal_order_id }) });
 
+// The texted link's page. `state` is decided by the server: open to pay, or why not.
+export type PayLink = {
+  state: "open" | "paid" | "processing" | "replaced" | "closed";
+  order_number: string; paypal_order_id: string; restaurant: string; ready_minutes: number;
+  lines: { name: string; qty: number; line_cents: number }[]; tax_cents: number; total_cents: number;
+};
+export const getPayLink = (pid: string) => req<PayLink>(`/api/pay/${encodeURIComponent(pid)}`);
+
 export const money =(cents: number) => `$${(cents / 100).toFixed(2)}`;

@@ -141,7 +141,10 @@ class VoiceTools:
         o = placed["order"]
         if conv.channel == "phone":
             if o["sms_consent_at"]:  # never text a caller who did not agree
-                body = payment_link_text(self.restaurant["name"], o["number"], o["total_cents"], placed["approve_url"])
+                # Our own pay page, not PayPal's hosted one: PayPal's page fails on phones holding a PayPal
+                # session or app, and ours offers card checkout with no PayPal account.
+                url = f"{self.settings.public_base_url.rstrip('/')}/p/{o['paypal_order_id']}"
+                body = payment_link_text(self.restaurant["name"], o["number"], o["total_cents"], url)
                 await asyncio.to_thread(self.sms.send, conv.caller_phone, body)
         else:
             await self.push("payment_ready", {"order_number": o["number"], "paypal_order_id": o["paypal_order_id"],

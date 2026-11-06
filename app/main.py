@@ -19,7 +19,7 @@ from app.db import connect, init_db
 from app.events import hub
 from app.menu import seed_menu
 from app.notify import make_on_paid, make_on_sold_out
-from app.orders import PAID_STATES, capture_if_current, expire_and_poll
+from app.orders import PAID_STATES, capture_if_current, expire_and_poll, find_by_paypal_id
 from app.owner import router as owner_router
 from app.paypal import PayPal
 from app.sms import Sms
@@ -195,12 +195,31 @@ def create_app(settings: Settings | None = None, paypal=None, sms=None, llm=None
         o = r["order"]  # status tells the page whether a not_pending order is already paid
         return {"result": r["result"], "order_number": o["number"] if o else None, "status": o["status"] if o else None}
 
+    @app.get("/api/pay/{pid}")
+    def pay_order(pid: str):
+        """The texted link's page: what this PayPal order is for and whether it can still be paid."""
+        conn = connect(s.database_path)
+        try:
+            o, superseded = find_by_paypal_id(conn, pid)
+        finally:
+            conn.close()
+        if not o:
+            return Response(status_code=404)
+        state = ("replaced" if superseded else "paid" if o["status"] in PAID_STATES
+                 else "processing" if o["status"] in ("capturing", "capture_pending")
+                 else "open" if o["status"] == "pending_payment" else "closed")
+        return {"state": state, "order_number": o["number"], "paypal_order_id": pid,
+                "lines": [{"name": i["name"], "qty": i["qty"], "line_cents": i["line_cents"]} for i in o["items"]],
+                "tax_cents": o["tax_cents"], "total_cents": o["total_cents"],
+                "restaurant": restaurant()["name"], "ready_minutes": restaurant()["ready_minutes"]}
+
     dist = ROOT / "web" / "dist"
     if dist.is_dir():  # built by `npm run build`; absent in tests and API-only runs
         app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
 
         @app.get("/")
         @app.get("/owner")
+        @app.get("/p/{pid}")
         def spa():
             return FileResponse(dist / "index.html")
 
