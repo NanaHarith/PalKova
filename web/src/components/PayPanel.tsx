@@ -17,6 +17,17 @@ function outcome(r: CaptureResult, readyMinutes: number): { text: string; paid: 
   }
 }
 
+/** Capture, or follow a capture another trigger (PayPal's webhook, the server's poll) already started:
+ * the server answers `not_pending` while it is in flight, so ask again until it settles. */
+async function captureSettled(pid: string): Promise<CaptureResult> {
+  for (let i = 0; i < 10; i++) {
+    const r = await capture(pid);
+    if (!(r.result === "not_pending" && (r.status === "capturing" || r.status === "capture_pending"))) return r;
+    await new Promise((ok) => setTimeout(ok, 1500));
+  }
+  return { result: "capture_pending", order_number: null, status: "capture_pending" };
+}
+
 /** A PayPal script that never loads would otherwise leave an empty space where the buttons go. */
 function ScriptFailed({ order }: { order: string }) {
   const [{ isRejected }] = usePayPalScriptReducer();
@@ -42,7 +53,7 @@ export default function PayPanel({ payment, clientId, readyMinutes, onPaid }:
             key={payment.paypal_order_id}  // a changed order brings a new PayPal order: remount the buttons
             style={{ layout: "vertical", shape: "rect", color: "gold", label: "pay", height: 48 }}
             createOrder={async () => payment.paypal_order_id}
-            onApprove={async () => settle(outcome(await capture(payment.paypal_order_id), readyMinutes))}
+            onApprove={async () => settle(outcome(await captureSettled(payment.paypal_order_id), readyMinutes))}
             onCancel={() => setMsg({ text: "Payment cancelled. Your order isn't placed until it's paid.", paid: false, again: true })}
             onError={() => setMsg({ text: "PayPal couldn't open. Try again in a moment.", paid: false, again: true })}
           />
