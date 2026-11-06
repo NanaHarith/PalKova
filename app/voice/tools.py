@@ -177,7 +177,8 @@ class VoiceTools:
         o = placed["order"]
         if placed["changed"] or conv.channel == "web":  # a repeat on the web re-pushes: the screen may have missed it
             await self._deliver(conv, placed)
-        return {"order_number": o["number"], "total_cents": o["total_cents"],
+        return {"order_number": o["number"], "order_number_spoken": " ".join(str(o["number"])),
+                "total_cents": o["total_cents"],
                 "total_words": cents_to_words(o["total_cents"]),
                 "delivery": "link sent" if conv.channel == "phone" else "buttons shown"}
 
