@@ -103,7 +103,7 @@ export default function Home() {
         </div>
         <dl className="facts">
           <div><dt>Hours</dt><dd>Every day<br />11 AM – 10 PM</dd></div>
-          <div><dt>Address</dt><dd>123 Gay Street<br />Knoxville, TN 37901</dd></div>
+          <div><dt>Address</dt><dd>418 Tamarind Row<br />Knoxville, TN 37902</dd></div>
           <div><dt>Phone</dt><dd><a href="tel:+13502503546" className="num">+1 350-250-3546</a></dd></div>
         </dl>
         <ul className="prints">

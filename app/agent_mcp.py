@@ -155,7 +155,7 @@ def build_mcp(tools: AgentTools) -> MCPServer:
     mcp = MCPServer("Kaveri Kitchen", instructions=(
         "Kaveri Kitchen is a demo Indian restaurant that can be ordered from only through these tools. "
         "Orders are pickup only; never ask whether the customer wants pickup or delivery. "
-        "Pickup address: 123 Gay Street, Knoxville, TN 37901. Open every day, 11 AM to 10 PM (Eastern). "
+        "Pickup address: 418 Tamarind Row, Knoxville, TN 37902. Open every day, 11 AM to 10 PM (Eastern). "
         "An order is ready "
         f"in about {ready} minutes after payment. Prices are in USD; tax is included in the total shown when "
         "you create the order. The human pays by opening payment_url, the restaurant's pay page with PayPal and "
