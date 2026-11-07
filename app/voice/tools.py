@@ -8,7 +8,8 @@ from dataclasses import dataclass, field
 from typing import Awaitable, Callable
 
 from app.agent_mcp import RateLimiter
-from app.orders import OrderError, latest_for_conversation, place_order as core_place_order, price_cart
+from app.orders import (OrderError, latest_for_conversation, pay_page_url, place_order as core_place_order,
+                        price_cart)
 from app.sms import payment_link_text
 from app.totals import cents_to_words
 
@@ -141,9 +142,7 @@ class VoiceTools:
         o = placed["order"]
         if conv.channel == "phone":
             if o["sms_consent_at"]:  # never text a caller who did not agree
-                # Our own pay page, not PayPal's hosted one: PayPal's page fails on phones holding a PayPal
-                # session or app, and ours offers card checkout with no PayPal account.
-                url = f"{self.settings.public_base_url.rstrip('/')}/p/{o['paypal_order_id']}"
+                url = pay_page_url(self.settings.public_base_url, o["paypal_order_id"])
                 body = payment_link_text(self.restaurant["name"], o["number"], o["total_cents"], url)
                 await asyncio.to_thread(self.sms.send, conv.caller_phone, body)
         else:

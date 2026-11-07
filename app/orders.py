@@ -191,6 +191,12 @@ def refundable_by_number(conn: sqlite3.Connection, number: str) -> dict:
         (number.lstrip("#"),)).fetchone()))
 
 
+def pay_page_url(base_url: str, paypal_order_id: str) -> str:
+    """Our own pay page, not PayPal's hosted one: PayPal's page fails on phones holding a PayPal session or app,
+    and ours offers card checkout with no PayPal account."""
+    return f"{base_url.rstrip('/')}/p/{paypal_order_id}"
+
+
 def find_by_paypal_id(conn: sqlite3.Connection, pid: str) -> tuple[dict | None, bool]:
     row = conn.execute("SELECT * FROM orders WHERE paypal_order_id = ?", (pid,)).fetchone()
     if row:

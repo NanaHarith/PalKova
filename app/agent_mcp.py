@@ -1,5 +1,5 @@
 """MCP agent channel: three tools an outside AI agent uses to browse the menu, order and check an order.
-Payment is always the human opening the PayPal link; the agent never touches card or login details."""
+Payment is always the human opening the pay page link; the agent never touches card or login details."""
 
 import difflib
 import threading
@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from app.config import restaurant
 from app.db import connect
 from app.menu import _norm, menu_for_prompt, resolve_item
-from app.orders import EXPIRY_MINUTES, PAID_STATES, OrderError, get_order, place_order
+from app.orders import EXPIRY_MINUTES, PAID_STATES, OrderError, get_order, pay_page_url, place_order
 from app.subscription import line_is_active
 from app.totals import cents_to_str
 
@@ -103,10 +103,10 @@ class AgentTools:
                 "subtotal_cents": o["subtotal_cents"], "tax_cents": o["tax_cents"], "total_cents": o["total_cents"],
                 "subtotal": cents_to_str(o["subtotal_cents"]), "tax": cents_to_str(o["tax_cents"]),
                 "total": cents_to_str(o["total_cents"]),
-                "payment_url": placed["approve_url"],
+                "payment_url": pay_page_url(self.settings.public_base_url, o["paypal_order_id"]),
                 "expires_at": (link_at + timedelta(minutes=EXPIRY_MINUTES)).isoformat(),
                 "ready_minutes": r["ready_minutes"],
-                "next_step": "Give payment_url to the customer to approve in PayPal. The order is confirmed "
+                "next_step": "Give payment_url to the customer to pay with PayPal or a card. The order is confirmed "
                              "once paid; check it with get_order_status(order_id).",
             }
         finally:
@@ -127,7 +127,7 @@ class AgentTools:
             out = {"order_number": o["number"], "status": o["status"], "total": cents_to_str(o["total_cents"]),
                    "total_cents": o["total_cents"], "ready_by": ready_by}
             if o["status"] == "pending_payment":
-                out["payment_url"] = o["flags"]["approve_url"]
+                out["payment_url"] = pay_page_url(self.settings.public_base_url, o["paypal_order_id"])
             return out
         finally:
             conn.close()
@@ -157,10 +157,10 @@ def build_mcp(tools: AgentTools) -> MCPServer:
         "Pickup address: 123 Gay Street, Knoxville, TN 37901. Open every day, 11 AM to 10 PM (Eastern). "
         "An order is ready "
         f"in about {ready} minutes after payment. Prices are in USD; tax is included in the total shown when "
-        "you create the order. The human pays by opening payment_url in PayPal; you never handle card or "
-        "login details. Shortest path: search_menu, confirm dishes, quantities and the customer's name with "
-        "the human, create_order, give them payment_url, then get_order_status with its order_id. If a dish is not on today's "
-        "menu, say so and offer the closest matches; never swap in a different dish. Read dish descriptions "
+        "you create the order. The human pays by opening payment_url, the restaurant's pay page with PayPal and "
+        "card buttons; no PayPal account is needed. You never handle card or login details. Shortest path: search_menu, confirm dishes, quantities and the customer's name with "
+        "the human, create_order, give them payment_url, then get_order_status with its order_id. If a dish is "
+        "not on today's menu, say so and offer the closest matches; never swap in a different dish. Read dish descriptions "
         "for the meat: mutton here means goat."))
 
     @mcp.tool(description=(
@@ -171,7 +171,7 @@ def build_mcp(tools: AgentTools) -> MCPServer:
         return tools.search_menu(query, dietary)
 
     @mcp.tool(description=(
-        "Place a pickup order and get a PayPal payment_url. Only after the customer confirmed the dishes, "
+        "Place a pickup order and get its payment_url. Only after the customer confirmed the dishes, "
         "quantities and the name for pickup. Use item_id values from search_menu. Give payment_url to the "
         "customer; the order is confirmed once they pay."))
     def create_order(items: list[OrderLine], customer_name: str, ctx: Context) -> dict:

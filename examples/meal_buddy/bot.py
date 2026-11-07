@@ -1,7 +1,7 @@
 """Meal Buddy: a Discord bot that pings at meal times and orders food through Grok and a restaurant's MCP server.
 
 Grok (xAI Responses API) calls the restaurant's remote MCP tools itself: search_menu, create_order,
-get_order_status. The human pays by opening the PayPal link; the bot never sees payment details.
+get_order_status. The human pays by opening the pay page link; the bot never sees payment details.
 Once an order exists the bot polls its status straight from the MCP server and reports the ready time.
 """
 
