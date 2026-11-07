@@ -8,7 +8,6 @@ import httpx
 from paypalserversdk.exceptions.error_exception import ErrorException
 from paypalserversdk.http.auth.o_auth_2 import ClientCredentialsAuthCredentials
 from paypalserversdk.models.cancel_subscription_request import CancelSubscriptionRequest
-from paypalserversdk.models.order_request import OrderRequest
 from paypalserversdk.models.refund_request import RefundRequest
 from paypalserversdk.paypal_serversdk_client import Environment, PaypalServersdkClient
 
@@ -74,11 +73,15 @@ class PayPal:
             "payment_source": {"paypal": {"experience_context": {
                 "user_action": "PAY_NOW", "shipping_preference": "NO_SHIPPING",
                 "brand_name": restaurant()["name"],
-                "return_url": f"{base}/pay/return", "cancel_url": f"{base}/pay/cancel"}}},
+                "return_url": f"{base}/pay/return", "cancel_url": f"{base}/pay/cancel",
+                # Otherwise Chrome on Android hands a sandbox order to the installed (live) PayPal app,
+                # which can't open it. Raw REST because the SDK's model drops this field.
+                "app_switch_preference": {"launch_paypal_app": False}}}},
         }
-        r = self.sdk.orders.create_order({
-            "body": OrderRequest.from_dictionary(body), "paypal_request_id": f"create-{oid}-{generation}"})
-        data = json.loads(r.text)
+        r = self.http.post(f"{self.base_url}/v2/checkout/orders", json=body, timeout=SDK_TIMEOUT_SECONDS,
+                           headers={"Authorization": self._auth(), "PayPal-Request-Id": f"create-{oid}-{generation}"})
+        r.raise_for_status()
+        data = r.json()
         links = {link["rel"]: link["href"] for link in data.get("links", [])}
         return {"id": data["id"], "approve_url": links.get("payer-action") or links.get("approve"),
                 "status": data["status"]}
