@@ -7,6 +7,7 @@
     "build": "tsc --noEmit && vite build"
   },
   "dependencies": {
+    "@fontsource-variable/anek-latin": "5.3.0",
     "@fontsource/anton": "5.3.0",
     "@fontsource/barlow": "5.3.0",
     "@fontsource/barlow-condensed": "5.3.0",

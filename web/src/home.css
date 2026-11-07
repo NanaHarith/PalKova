@@ -1,5 +1,6 @@
 /* Kaveri Kitchen public page: the wall of a Chennai mess. Enamel teal wall, painted cream boards bordered in
-   signwriter red, a mustard counter window. Signs speak in Anton; everything read at length is Barlow. */
+   signwriter red, a mustard counter window. Signs speak in Anek Latin at its condensed width; everything read
+   at length is Barlow. */
 .home {
   --wall: #0D4F52;
   --wall-deep: #0A3F42;
@@ -15,9 +16,11 @@
   --ink-2: #4A4740;
   --dots: #C9BFAE;
   --steel: #9FAAAD;
-  --sign: Anton, "Barlow Condensed", sans-serif;
+  --sign: "Anek Latin Variable", Anton, sans-serif;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
+  /* Inherited by every sign. Only the variable sign face has these axes; Barlow is static and ignores them. */
+  font-variation-settings: "wdth" 75, "wght" 700;
   min-height: 100%;
   background: var(--wall);
   color: var(--ink);
@@ -379,7 +382,8 @@ html:has(.home) { scrollbar-color: #C9951A #0A3F42; }
   .wall-top { padding: 32px 16px 48px; }
   .sign { padding: 26px 22px 22px; border-width: 8px; }
   .sign-line { font-size: 18px; }
-  .plaque { font-size: 16px; padding: 10px 14px; }
+  .plaque, .plaque-ink a { font-size: 16px; padding: 10px 24px; }  /* text clears the screws at 11–17px */
+  .plaque-ink { padding: 0; }
   .window { padding: 46px 16px 92px; min-height: 300px; }
   .ledge { margin: 0 -8px; }
   .window-title { font-size: 36px; }

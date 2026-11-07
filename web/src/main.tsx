@@ -7,6 +7,7 @@ import "@fontsource/barlow/700.css";
 import "@fontsource/barlow-condensed/600.css";
 import "@fontsource/barlow-condensed/700.css";
 import "@fontsource/anton/400.css";
+import "@fontsource-variable/anek-latin/standard.css";
 import "./styles.css";
 import Home from "./pages/Home";
 import Pay from "./pages/Pay";
