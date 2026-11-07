@@ -136,13 +136,6 @@ def transition(conn: sqlite3.Connection, order_id: str, action: str) -> dict:
     return get_order(conn, order_id)
 
 
-def find_by_number(conn: sqlite3.Connection, number: str, tz: str) -> dict | None:
-    row = conn.execute(
-        "SELECT * FROM orders WHERE number = ? AND order_date = ?", (number, _local_date(tz))
-    ).fetchone()
-    return _decode(row)
-
-
 def check_refundable(order: dict | None) -> dict:
     """A refund goes only to a paid order of ours, against its own capture, once."""
     if order is None or not order["capture_id"]:
