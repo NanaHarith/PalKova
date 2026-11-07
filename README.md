@@ -18,8 +18,8 @@ Add `{PUBLIC_BASE_URL}/mcp` as a remote MCP server (streamable HTTP, no auth).
 | Tool | What it does |
 |---|---|
 | `search_menu(query?, dietary?)` | Orderable dishes with price and remaining stock. A dish not on the menu returns "not on today's menu" and the closest matches, never a substitute. |
-| `create_order(items, customer_name)` | Prices the order on the server and returns the number, lines, total, `payment_url` and `expires_at` (15 minutes). Limited to 10 orders per hour per IP. |
-| `get_order_status(order_number)` | Status, the link while unpaid, and the ready time once paid. |
+| `create_order(items, customer_name)` | Prices the order on the server and returns the `order_id`, number, lines, total, `payment_url` and `expires_at` (15 minutes). Limited to 10 orders per hour per IP. |
+| `get_order_status(order_id)` | Status, the link while unpaid, and the ready time once paid. Takes the random `order_id`, not the 4-digit number, so nobody can look up someone else's order by guessing. |
 
 [`examples/meal_buddy/`](examples/meal_buddy/) is a proactive agent built on this endpoint alone: a Discord bot that messages you at meal times and contains no PalKova code.
 

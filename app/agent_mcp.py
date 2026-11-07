@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from app.config import restaurant
 from app.db import connect
 from app.menu import _norm, menu_for_prompt, resolve_item
-from app.orders import EXPIRY_MINUTES, PAID_STATES, OrderError, find_by_number, place_order
+from app.orders import EXPIRY_MINUTES, PAID_STATES, OrderError, get_order, place_order
 from app.subscription import line_is_active
 from app.totals import cents_to_str
 
@@ -95,7 +95,7 @@ class AgentTools:
             o = placed["order"]
             link_at = datetime.fromisoformat(o["flags"]["link_created_at"])
             return {
-                "order_number": o["number"], "customer_name": o["customer_name"],
+                "order_id": o["id"], "order_number": o["number"], "customer_name": o["customer_name"],
                 "lines": [{"name": ln["name"], "qty": ln["qty"], "spice": ln.get("spice"), "note": ln.get("note"),
                            "unit_price_cents": ln["unit_price_cents"], "unit_price": cents_to_str(ln["unit_price_cents"]),
                            "line_cents": ln["line_cents"], "line_total": cents_to_str(ln["line_cents"])}
@@ -107,17 +107,19 @@ class AgentTools:
                 "expires_at": (link_at + timedelta(minutes=EXPIRY_MINUTES)).isoformat(),
                 "ready_minutes": r["ready_minutes"],
                 "next_step": "Give payment_url to the customer to approve in PayPal. The order is confirmed "
-                             "once paid; check it with get_order_status.",
+                             "once paid; check it with get_order_status(order_id).",
             }
         finally:
             conn.close()
 
-    def get_order_status(self, order_number: str) -> dict:
+    def get_order_status(self, order_id: str) -> dict:
+        """By the order's random id, not its 4-digit number: numbers are guessable and would show anyone's order."""
         conn = connect(self.settings.database_path)
         try:
-            o = find_by_number(conn, order_number.strip().lstrip("#"), self.settings.restaurant_tz)
+            o = get_order(conn, order_id.strip())
             if o is None:
-                return {"error": "not_found", "message": "No order with that number today."}
+                return {"error": "not_found",
+                        "message": "No order with that order_id. Use the order_id create_order returned."}
             ready_by = None
             if o["status"] in PAID_STATES and o["paid_at"]:
                 ready_by = (datetime.fromisoformat(o["paid_at"])
@@ -157,7 +159,7 @@ def build_mcp(tools: AgentTools) -> MCPServer:
         f"in about {ready} minutes after payment. Prices are in USD; tax is included in the total shown when "
         "you create the order. The human pays by opening payment_url in PayPal; you never handle card or "
         "login details. Shortest path: search_menu, confirm dishes, quantities and the customer's name with "
-        "the human, create_order, give them payment_url, then get_order_status. If a dish is not on today's "
+        "the human, create_order, give them payment_url, then get_order_status with its order_id. If a dish is not on today's "
         "menu, say so and offer the closest matches; never swap in a different dish. Read dish descriptions "
         "for the meat: mutton here means goat."))
 
@@ -176,9 +178,9 @@ def build_mcp(tools: AgentTools) -> MCPServer:
         return tools.create_order([i.model_dump() for i in items], customer_name, _client_ip(ctx))
 
     @mcp.tool(description=(
-        "Check an order by its number: pending_payment, paid, ready, picked_up, cancelled or expired. "
-        "While unpaid it also returns payment_url again."))
-    def get_order_status(order_number: str) -> dict:
-        return tools.get_order_status(order_number)
+        "Check an order by the order_id create_order returned (not the 4-digit order number): pending_payment, "
+        "paid, ready, picked_up, cancelled or expired. While unpaid it also returns payment_url again."))
+    def get_order_status(order_id: str) -> dict:
+        return tools.get_order_status(order_id)
 
     return mcp

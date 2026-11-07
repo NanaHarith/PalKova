@@ -48,7 +48,7 @@ home: discord.abc.Messageable | None = None  # where the bot talks: the owner's 
 
 
 def ask_grok(text: str) -> tuple[str, set[str]]:
-    """One turn on the running conversation; returns the reply and any order numbers Grok created."""
+    """One turn on the running conversation; returns the reply and the ids of any orders Grok created."""
     global last_response_id
     body = {"model": MODEL, "input": [{"role": "user", "content": text}],
             "tools": [{"type": "mcp", "server_url": MCP_URL, "server_label": "kaveri_kitchen"}]}
@@ -64,24 +64,24 @@ def ask_grok(text: str) -> tuple[str, set[str]]:
         last_response_id = data["id"]
     reply = "".join(c.get("text", "") for item in data.get("output", []) if item.get("type") == "message"
                     for c in item.get("content", []))
-    # Tool results come back as JSON strings inside the output; read order numbers out of the raw response
+    # Tool results come back as JSON strings inside the output; read order ids out of the raw response
     # so this doesn't depend on the exact output item schema.
-    numbers = set(re.findall(r'order_number\\*"\s*:\s*\\*"(\d{4})', json.dumps(data)))
-    return reply or "(no reply)", numbers
+    ids = set(re.findall(r'order_id\\*"\s*:\s*\\*"([0-9a-f-]{36})', json.dumps(data)))
+    return reply or "(no reply)", ids
 
 
 async def grok(text: str) -> str:
-    reply, numbers = await asyncio.to_thread(ask_grok, text)
-    for number in numbers - watching:
-        watching.add(number)
-        tasks.add(asyncio.create_task(watch_order(number)))
+    reply, ids = await asyncio.to_thread(ask_grok, text)
+    for order_id in ids - watching:
+        watching.add(order_id)
+        tasks.add(asyncio.create_task(watch_order(order_id)))
     return reply
 
 
-def order_status(number: str) -> dict:
+def order_status(order_id: str) -> dict:
     r = httpx.post(MCP_URL, timeout=60, headers={"Accept": "application/json, text/event-stream"}, json={
         "jsonrpc": "2.0", "id": 1, "method": "tools/call",
-        "params": {"name": "get_order_status", "arguments": {"order_number": number}}})
+        "params": {"name": "get_order_status", "arguments": {"order_id": order_id}}})
     return json.loads(r.json()["result"]["content"][0]["text"])
 
 
@@ -93,15 +93,15 @@ async def say(text: str) -> None:
     await home.send(text[:2000])
 
 
-async def watch_order(number: str) -> None:
+async def watch_order(order_id: str) -> None:
     deadline = asyncio.get_running_loop().time() + 20 * 60  # payment links expire after 15 minutes
     while asyncio.get_running_loop().time() < deadline:
         try:
-            s = await asyncio.to_thread(order_status, number)
+            s = await asyncio.to_thread(order_status, order_id)
         except (httpx.HTTPError, KeyError, ValueError):
             await asyncio.sleep(20)  # a sleeping free-tier host can take a while to wake
             continue
-        status = s.get("status")
+        status, number = s.get("status"), s.get("order_number", "")
         if status in ("paid", "ready", "picked_up"):
             await say(f"Order #{number} is paid ({s['total']}). It will be ready for pickup at "
                       f"{clock(s['ready_by'])}." if s.get("ready_by") else f"Order #{number} is paid.")
@@ -110,7 +110,7 @@ async def watch_order(number: str) -> None:
             await say(f"Order #{number} is {status or 'not found'}; nothing was charged. Want to try again?")
             break
         await asyncio.sleep(20)
-    watching.discard(number)
+    watching.discard(order_id)
 
 
 def meal_prompt(now: datetime) -> str:
