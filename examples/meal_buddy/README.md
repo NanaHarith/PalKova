@@ -4,7 +4,7 @@ A proactive customer agent: a Discord bot that messages you at meal times, asks 
 
 1. At 12:30 and 19:00 (America/New_York by default) the bot asks Grok to start a conversation. Grok calls `search_menu` on the restaurant's MCP server and suggests a few dishes.
 2. You reply in plain words. Grok confirms the order with you, then calls `create_order` and sends back the order number, the total and a `payment_url`.
-3. You open the link and pay on the restaurant's pay page with PayPal or a card. Neither the bot nor Grok ever sees payment details.
+3. You open the link and pay on the restaurant's pay page with PayPal or a card. The card form is PayPal's too, so card details go to PayPal, never to the restaurant. Neither the bot nor Grok ever sees payment details.
 4. The bot polls `get_order_status` every 20 seconds and tells you when the order is paid and what time it will be ready for pickup.
 
 Grok reaches the MCP server through the xAI Responses API's remote MCP tool (`{"type": "mcp", "server_url": ...}`), so the restaurant's tools run on xAI's side; the bot only relays messages and watches the order.

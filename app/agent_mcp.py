@@ -106,7 +106,8 @@ class AgentTools:
                 "payment_url": pay_page_url(self.settings.public_base_url, o["paypal_order_id"]),
                 "expires_at": (link_at + timedelta(minutes=EXPIRY_MINUTES)).isoformat(),
                 "ready_minutes": r["ready_minutes"],
-                "next_step": "Give payment_url to the customer to pay with PayPal or a card. The order is confirmed "
+                "next_step": "Give payment_url to the customer to pay with PayPal or a card (both through PayPal). "
+                             "The order is confirmed "
                              "once paid; check it with get_order_status(order_id).",
             }
         finally:
@@ -158,7 +159,8 @@ def build_mcp(tools: AgentTools) -> MCPServer:
         "An order is ready "
         f"in about {ready} minutes after payment. Prices are in USD; tax is included in the total shown when "
         "you create the order. The human pays by opening payment_url, the restaurant's pay page with PayPal and "
-        "card buttons; no PayPal account is needed. You never handle card or login details. Shortest path: search_menu, confirm dishes, quantities and the customer's name with "
+        "card buttons; no PayPal account is needed, and the card form is PayPal's own, so card details go to "
+        "PayPal, never to the restaurant. You never handle card or login details. Shortest path: search_menu, confirm dishes, quantities and the customer's name with "
         "the human, create_order, give them payment_url, then get_order_status with its order_id. If a dish is "
         "not on today's menu, say so and offer the closest matches; never swap in a different dish. Read dish descriptions "
         "for the meat: mutton here means goat."))

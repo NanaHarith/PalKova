@@ -7,7 +7,7 @@ Built for the PayPal AI Hackathon. The restaurant, **Kaveri Kitchen**, is fictio
 ## What it does
 
 - **Amount-checked capture.** PayPal approves; the server then checks that the order is still current, the amount matches and the dishes are in stock, and only then captures. If the order changed after a link went out, the old link is never charged.
-- **Agents cannot spend.** An agent gets a `payment_url` and hands it to its person, who pays on the restaurant's pay page with PayPal or a card. The agent never sees payment details.
+- **Agents cannot spend.** An agent gets a `payment_url` and hands it to its person, who pays on the restaurant's pay page with PayPal or a card. The card form is PayPal's too: card details go to PayPal, never to the restaurant. The agent never sees payment details.
 - **Owner tools.** A live kitchen board and a menu and stock grid (AG Grid), plus an "Ask" bar that filters the grids, answers takings and sales questions, and proposes refunds. The AI can find a refund; only the owner's tap can make it, and the server re-checks it first.
 - **PayPal at both ends.** Customers pay through PayPal Orders v2. The restaurant pays for the line through PayPal Subscriptions: cancel, and the line stops taking orders.
 
