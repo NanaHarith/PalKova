@@ -11,6 +11,12 @@ Built for the PayPal AI Hackathon. The restaurant, **Kaveri Kitchen**, is fictio
 - **Owner tools.** A live kitchen board and a menu and stock grid (AG Grid), plus an "Ask" bar that filters the grids, answers takings and sales questions, and proposes refunds. The AI can find a refund; only the owner's tap can make it, and the server re-checks it first.
 - **PayPal at both ends.** Customers pay through PayPal Orders v2. The restaurant pays for the line through PayPal Subscriptions: cancel, and the line stops taking orders.
 
+## Try it
+
+- Restaurant page: https://palkova.hariths.com. Talk to order in the browser, or call (350) 250-3546.
+- Pay: on the pay page, tap *Debit or Credit Card* and use the sandbox test card shown there. No PayPal account needed.
+- Owner board: https://palkova.hariths.com/owner. Judges get the password with the Devpost submission.
+
 ## Connect an MCP client
 
 Add `{PUBLIC_BASE_URL}/mcp` as a remote MCP server (streamable HTTP, no auth).
