@@ -6,8 +6,9 @@ from contextlib import contextmanager
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from itsdangerous import BadSignature, URLSafeTimedSerializer
+from openai import APIStatusError
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.config import restaurant
@@ -16,6 +17,7 @@ from app.events import hub
 from app.menu import menu_with_stats, public_menu, update_item
 from app.command import CommandError, run_command
 from app.orders import OrderError, check_refundable, dismiss_alert, get_order, recent_orders, transition
+from app.studio import sse, turn_request
 from app.subscription import _row, cancel, line_is_active, store_subscription, sync
 
 COOKIE = "pk_owner"
@@ -171,6 +173,19 @@ def command(body: CommandBody, request: Request):
                                history=[(h.q, h.a) for h in body.history])
         except CommandError as e:
             raise HTTPException(422, e.code)
+
+
+@router.post("/api/studio/responses", dependencies=[Depends(require_owner)])
+def studio_turn(body: dict, request: Request):
+    """One turn of the Takings dashboard's agents. Errors go back as JSON, which Studio's adapter reads."""
+    llm, s = request.app.state.llm, request.app.state.settings
+    if llm is None:
+        return JSONResponse({"error": {"message": "The assistant isn't set up on this server."}}, 503)
+    try:
+        stream = llm.responses.create(**turn_request(body, s.studio_llm_model or s.command_llm_model or s.llm_model))
+    except APIStatusError as e:
+        return JSONResponse({"error": {"message": e.message}}, e.status_code)
+    return StreamingResponse(sse(stream), media_type="text/event-stream", headers={"Cache-Control": "no-store"})
 
 
 @router.post("/api/refunds", dependencies=[Depends(require_owner)])

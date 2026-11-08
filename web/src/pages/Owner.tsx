@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GridApi } from "ag-grid-community";
 import { ApiError, AuthError, dismissAlert, events, getLine, getOrders, patchOrder, type FeedState, type LineState, type Order } from "../api";
 import KitchenBoard, { liveAlerts, type Action, type BoardContext } from "../components/KitchenBoard";
 import CommandBar from "../components/CommandBar";
 import MenuGrid from "../components/MenuGrid";
 import SubscriptionPanel from "../components/SubscriptionPanel";
+const Takings = lazy(() => import("../components/Takings"));  // AG Studio is large; fetched on first visit
 import { AlertIcon } from "../icons";
 
 const RESYNC_MS = 60_000;  // new unpaid orders and expiries send no event; a quiet re-read catches them
@@ -19,7 +20,8 @@ const ALERT_WORDS: Record<string, string> = {
   capture_orphaned: "a payment could not be matched to it",
 };
 const RANGES = [{ days: 1, label: "Today" }, { days: 7, label: "7 days" }, { days: 30, label: "30 days" }];
-const ACTION_WORDS: Record<Action, string> = { ready: "mark ready", picked_up: "mark picked up", cancel: "cancel" };
+type View = "orders" | "menu" | "takings";
+const ACTION_WORDS: Record<Action, string> ={ ready: "mark ready", picked_up: "mark picked up", cancel: "cancel" };
 
 export default function Owner({ onSignedOut }: { onSignedOut: () => void }) {
   const [rows, setRows] = useState<Order[] | null>(null);
@@ -31,8 +33,9 @@ export default function Owner({ onSignedOut }: { onSignedOut: () => void }) {
   const [arrivals, setArrivals] = useState(0);
   const [days, setDays] = useState(1);
   const [panel, setPanel] = useState(false);
-  const [view, setView] = useState<"orders" | "menu">("orders");
+  const [view, setView] = useState<View>("orders");
   const [menuOpened, setMenuOpened] = useState(false);  // the menu grid mounts on first visit, then stays live
+  const [takingsOpened, setTakingsOpened] = useState(false);  // so does Takings, which pulls in AG Studio
   const [menuVersion, setMenuVersion] = useState(0);
   const daysRef = useRef(days);  // read by load(), so changing the range doesn't reopen the event stream
   const grid = useRef<GridApi<Order> | null>(null);
@@ -111,7 +114,11 @@ export default function Owner({ onSignedOut }: { onSignedOut: () => void }) {
   };
 
   const pickRange = (d: number) => { daysRef.current = d; setDays(d); load(); };
-  const pickView = (v: "orders" | "menu") => { setView(v); if (v === "menu") setMenuOpened(true); };
+  const pickView = (v: View) => {
+    setView(v);
+    if (v === "menu") setMenuOpened(true);
+    if (v === "takings") setTakingsOpened(true);
+  };
 
   const jumpTo = (id: string) => {
     const node = grid.current?.getRowNode(id);
@@ -136,6 +143,7 @@ export default function Owner({ onSignedOut }: { onSignedOut: () => void }) {
           <nav className="views" aria-label="Screens">
             <button aria-pressed={view === "orders"} onClick={() => pickView("orders")}>Orders</button>
             <button aria-pressed={view === "menu"} onClick={() => pickView("menu")}>Menu &amp; stock</button>
+            <button aria-pressed={view === "takings"} onClick={() => pickView("takings")}>Takings</button>
           </nav>
         </div>
         <div className="rail-mid">
@@ -201,6 +209,13 @@ export default function Owner({ onSignedOut }: { onSignedOut: () => void }) {
       {menuOpened && (
         <div className="view" hidden={view !== "menu"}>
           <MenuGrid version={menuVersion} onNotice={setNotice} onSignedOut={onSignedOut} />
+        </div>
+      )}
+      {takingsOpened && (
+        <div className="view" hidden={view !== "takings"}>
+          <Suspense fallback={<div className="loading">Loading takings…</div>}>
+            <Takings version={menuVersion} onSignedOut={onSignedOut} />
+          </Suspense>
         </div>
       )}
     </div>

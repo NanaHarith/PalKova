@@ -5,6 +5,7 @@ COPY web/package.json web/package-lock.json ./
 RUN npm ci
 COPY web/ ./
 ARG VITE_AG_GRID_LICENSE=""
+ARG VITE_AG_STUDIO_LICENSE=""
 RUN npm run build
 
 FROM python:3.12-slim

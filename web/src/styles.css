@@ -250,6 +250,24 @@ button, input { font: inherit; }
 .tool-row-solo .command { max-width: none; }
 .tool-row-solo .cmd-form { max-width: 720px; }
 .cmd-answer { font-size: 16px; }
+
+/* Takings: an AG Studio page on the board's ground-2, under the same toolbar row as the other screens. */
+.takings-row { align-items: center; justify-content: space-between; }
+.takings-note { margin: 0; font-size: 15px; color: var(--ink-2); max-width: 70ch; }
+.takings { flex: 1; min-height: 0; background: var(--ground-2); }
+.takings .ag-studio, .takings .ag-studio * { font-variant-numeric: tabular-nums lining-nums; }
+
+/* Ordered together: pairs ranked, each with the stock gauge's silk-on-track bar (counts, not order steps). */
+.pairings { height: 100%; padding: 0 8px 4px; display: flex; flex-direction: column; gap: 10px; font-variant-numeric: tabular-nums lining-nums; }
+.pairings ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.pairings li { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: baseline; }
+.pr-dishes { font-size: 15px; font-weight: 600; color: var(--ink); min-width: 0; }
+.pr-and { font-weight: 400; color: var(--ink-2); }
+.pr-count { font-family: "Barlow Condensed", Barlow, sans-serif; font-weight: 700; font-size: 20px; color: var(--ink); }
+.pr-track { grid-column: 1 / -1; height: 6px; background: var(--st-done); }
+.pr-track span { display: block; height: 100%; background: var(--silk); transition: width 600ms var(--ease-out); }
+.pr-foot { margin: auto 0 0; font-size: 13px; color: var(--ink-mute); }
+@media (prefers-reduced-motion: reduce) { .pr-track span { transition: none; } }
 .cmd-quiet { color: var(--ink-2); }
 .cmd-warn { font-weight: 600; }
 .cmd-error { font-weight: 600; color: var(--alert); }

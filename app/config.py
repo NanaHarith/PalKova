@@ -28,6 +28,7 @@ class Settings:
     llm_provider: str = "openai"
     llm_model: str = ""
     command_llm_model: str = ""
+    studio_llm_model: str = ""
     llm_api_key: str = ""
     paypal_client_id: str = ""
     paypal_client_secret: str = ""
