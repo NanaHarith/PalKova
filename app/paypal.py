@@ -1,4 +1,5 @@
-"""PayPal: Orders and Subscriptions via the server SDK, webhook verify and raw REST via httpx."""
+"""PayPal: Orders, Payments, Subscriptions and Transaction Search via the server SDK; order create and webhook
+verify via httpx, as the SDK has no field or endpoint for them."""
 import json
 import time
 from decimal import Decimal
@@ -131,7 +132,7 @@ class PayPal:
             for k in ("start_date", "end_date"):  # the model's default dates carry no offset; PayPal 400s on that
                 if query[k] and not (query[k].endswith("Z") or "+" in query[k] or "-" in query[k][11:]):
                     query[k] += "Z"
-            return self.request("GET", "/v1/reporting/transactions", params={k: v for k, v in query.items() if v})
+            return json.loads(self.sdk.transaction_search.search_transactions({k: v for k, v in query.items() if v}).text)
         if self._toolkit is None:
             from paypal_agent_toolkit.shared.api import PayPalAPI
             from paypal_agent_toolkit.shared.configuration import Context
