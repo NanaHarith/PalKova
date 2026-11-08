@@ -1,12 +1,12 @@
 // The owner's Takings screen: an AG Studio dashboard over the last 90 days of paid orders, themed as
 // part of the board, with the "Ordered together" widget and the kitchen analyst on Studio's agents.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AgStudioAiModule } from "ag-studio";
 import { AgStudio, AgStudioProvider, createWidgets } from "ag-studio-react";
 import { AuthError, getOrders, type Order } from "../api";
 import { takingsAi } from "../studio/ai";
 import { takingsData } from "../studio/data";
-import { pairingsWidget } from "../studio/Pairings";
+import { pairingsWidget, type Basket } from "../studio/Pairings";
 import { takingsReport } from "../studio/report";
 import { takingsTheme } from "../studio/theme";
 
@@ -27,7 +27,9 @@ export default function Takings({ version, onSignedOut }: { version: number; onS
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [editing, setEditing] = useState(false);
-  const ai = useMemo(takingsAi, []);
+  // The analyst's ordered_together tool reads the latest baskets; the harness itself is built once.
+  const baskets = useRef<Basket[]>([]);
+  const ai = useMemo(() => takingsAi(() => baskets.current), []);
 
   useEffect(() => {
     getOrders(DAYS).then((o) => { setOrders(o); setFailed(false); })
@@ -35,6 +37,8 @@ export default function Takings({ version, onSignedOut }: { version: number; onS
   }, [version, onSignedOut]);
 
   const data = useMemo(() => (orders ? takingsData(orders) : null), [orders]);
+  baskets.current = (data?.sources.find((s) => s.id === "lines") as { data?: { order_id: string; dish: string }[] } | undefined)
+    ?.data?.map((l) => ({ order: l.order_id, dish: l.dish })) ?? [];
 
   return (
     <>

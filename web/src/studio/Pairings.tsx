@@ -6,18 +6,15 @@ import type { AgWidgetField, AgWidgetParams } from "ag-studio";
 import type { AgWidgetDefinition } from "ag-studio-react";
 
 type Pair = { a: string; b: string; orders: number };
+export type Basket = { order: string; dish: string };
 const TOP = 6;
 
-/** Each pair of distinct dishes counted once per order. */
-export function pairs(rows: { order: string; dish: string }[]): { list: Pair[]; baskets: number } {
-  const baskets = new Map<string, Set<string>>();
-  for (const r of rows) {
-    if (!r.order || !r.dish) continue;
-    (baskets.get(r.order) ?? baskets.set(r.order, new Set()).get(r.order)!).add(r.dish);
-  }
+/** Each pair of distinct dishes counted once per order. The widget and the kitchen analyst's
+ *  `ordered_together` tool both count with this, so the two always agree. */
+export function pairs(rows: Basket[], top = TOP): { list: Pair[]; baskets: number } {
   const counts = new Map<string, Pair>();
   let multi = 0;
-  for (const dishes of baskets.values()) {
+  for (const dishes of baskets(rows).values()) {
     const d = [...dishes].sort();
     if (d.length > 1) multi++;
     for (let i = 0; i < d.length; i++) for (let j = i + 1; j < d.length; j++) {
@@ -27,8 +24,33 @@ export function pairs(rows: { order: string; dish: string }[]): { list: Pair[]; 
       counts.set(key, p);
     }
   }
-  const list = [...counts.values()].sort((x, y) => y.orders - x.orders || x.a.localeCompare(y.a)).slice(0, TOP);
+  const list = [...counts.values()].sort((x, y) => y.orders - x.orders || x.a.localeCompare(y.a)).slice(0, top);
   return { list, baskets: multi };
+}
+
+export function baskets(rows: Basket[]): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  for (const r of rows) {
+    if (!r.order || !r.dish) continue;
+    (out.get(r.order) ?? out.set(r.order, new Set()).get(r.order)!).add(r.dish);
+  }
+  return out;
+}
+
+/** What goes with a dish ("biryani" matches every biryani): its orders, how many had nothing else, and its pairs. */
+export function pairsWith(rows: Basket[], dish: string) {
+  const term = dish.trim().toLowerCase();
+  const has = (d: string) => d.toLowerCase().includes(term);
+  const all = [...baskets(rows).values()].filter((b) => [...b].some(has));
+  const both = pairs(rows, Number.MAX_SAFE_INTEGER).list.filter((p) => has(p.a) || has(p.b));
+  const alone = all.filter((b) => b.size === 1).length;
+  return {
+    matching_dishes: [...new Set(all.flatMap((b) => [...b].filter(has)))].sort(),
+    orders_with_dish: all.length,
+    orders_with_dish_and_something_else: all.length - alone,
+    orders_with_dish_alone: alone,
+    pairs: both.slice(0, 10).map((p) => ({ dishes: [p.a, p.b], orders: p.orders })),
+  };
 }
 
 type Mapping = { order: AgWidgetField[]; dish: AgWidgetField[] };
