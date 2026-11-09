@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AgStudioAiModule } from "ag-studio";
 import { AgStudio, AgStudioProvider, createWidgets } from "ag-studio-react";
-import { AuthError, getOrders, type Order } from "../api";
+import { AuthError, getMenu, getOrders, type MenuItem, type Order } from "../api";
 import { takingsAi } from "../studio/ai";
 import { takingsData } from "../studio/data";
 import { pairingsWidget, type Basket } from "../studio/Pairings";
@@ -24,7 +24,7 @@ const widgets = (defaults: any) => createWidgets({
 } as never);
 
 export default function Takings({ version, onSignedOut }: { version: number; onSignedOut: () => void }) {
-  const [orders, setOrders] = useState<Order[] | null>(null);
+  const [loaded, setLoaded] = useState<{ orders: Order[]; menu: MenuItem[] } | null>(null);
   const [failed, setFailed] = useState(false);
   const [editing, setEditing] = useState(false);
   // The analyst's ordered_together tool reads the latest baskets; the harness itself is built once.
@@ -32,11 +32,11 @@ export default function Takings({ version, onSignedOut }: { version: number; onS
   const ai = useMemo(() => takingsAi(() => baskets.current), []);
 
   useEffect(() => {
-    getOrders(DAYS).then((o) => { setOrders(o); setFailed(false); })
+    Promise.all([getOrders(DAYS), getMenu()]).then(([orders, m]) => { setLoaded({ orders, menu: m.items }); setFailed(false); })
       .catch((e) => (e instanceof AuthError ? onSignedOut() : setFailed(true)));
   }, [version, onSignedOut]);
 
-  const data = useMemo(() => (orders ? takingsData(orders) : null), [orders]);
+  const data = useMemo(() => (loaded ? takingsData(loaded.orders, loaded.menu) : null), [loaded]);
   baskets.current = (data?.sources.find((s) => s.id === "lines") as { data?: { order_id: string; dish: string }[] } | undefined)
     ?.data?.map((l) => ({ order: l.order_id, dish: l.dish })) ?? [];
 
