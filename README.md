@@ -226,8 +226,6 @@ Settings are environment variables. [`.env.example`](.env.example) lists them in
 | `FORWARD_NUMBER` | Optional: lets phone callers ask for a person |
 | `CALL_LIMIT_EXEMPT_NUMBER` | Optional: one number exempt from the per-number call and text limits |
 | `VITE_AG_GRID_LICENSE`, `VITE_AG_STUDIO_LICENSE` | Build time, read by `npm run build`. Without them the grids and Takings show a watermark. |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DB_SNAPSHOT_BUCKET` | Only for a host with no disk: snapshots SQLite to private Supabase Storage. Leave blank with a volume. |
-
 The restaurant's name, tax rate (8.25%) and ready time are in [`config/restaurant.json`](config/restaurant.json), and the menu in [`config/menu.json`](config/menu.json). The menu file seeds an empty database. After that, the owner changes prices, stock and availability on the board.
 
 ## 9. Deploy

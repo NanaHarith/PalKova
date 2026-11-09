@@ -111,10 +111,7 @@ def assistant_config(s, items: list[dict], sold_out: list[dict], channel: str = 
                   # an empty request-start stops Vapi's default "One moment" filler on every tool call
                   "tools": [{"type": "function", "function": t["function"],
                              "messages": [{"type": "request-start", "content": ""}]} for t in schemas]},
-        # the voice says "Kaveri" as "Kabri"; respell it for speech only, the transcript keeps the real name
-        "voice": {"provider": "vapi", "voiceId": "Naina",
-                  "chunkPlan": {"formatPlan": {"replacements": [
-                      {"type": "exact", "key": "Kaveri", "value": "Kaa-vay-ree"}]}}},
+        "voice": {"provider": "vapi", "voiceId": "Naina"},
         "transcriber": {"provider": "deepgram", "model": "nova-3", "language": "en",
                         "keyterm": [r["name"], *(i["name"] for i in items)]},
         "maxDurationSeconds": MAX_CALL_SECONDS,

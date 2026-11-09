@@ -33,9 +33,6 @@ class Settings:
     paypal_client_secret: str = ""
     paypal_webhook_id: str = ""
     paypal_plan_id: str = ""
-    supabase_url: str = ""
-    supabase_service_role_key: str = ""
-    db_snapshot_bucket: str = ""
     vapi_public_key: str = ""
     vapi_webhook_secret: str = ""
 

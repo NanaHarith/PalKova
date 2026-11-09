@@ -23,7 +23,6 @@ from app.orders import PAID_STATES, capture_if_current, expire_and_poll, find_by
 from app.owner import router as owner_router
 from app.paypal import PayPal
 from app.sms import Sms
-from app.storage import DbSnapshot
 from app.subscription import subscription_handlers
 from app.voice.limits import CallSlots
 from app.voice.tools import MAX_TEXTS_PER_NUMBER, TEXT_WINDOW_SECONDS
@@ -92,15 +91,10 @@ def create_app(settings: Settings | None = None, paypal=None, sms=None, llm=None
     on_paid = make_on_paid(hub, sms, restaurant())
     on_sold_out = make_on_sold_out(hub, restaurant())
 
-    snapshot = (DbSnapshot(s.supabase_url, s.supabase_service_role_key, s.db_snapshot_bucket)
-                if s.db_snapshot_bucket else None)
-
     def tick() -> None:
         conn = connect(s.database_path)
         try:
             expire_and_poll(conn, paypal, tz=s.restaurant_tz, on_paid=on_paid, on_sold_out=on_sold_out)
-            if snapshot:
-                snapshot.save(conn)
         finally:
             conn.close()
 
@@ -121,8 +115,6 @@ def create_app(settings: Settings | None = None, paypal=None, sms=None, llm=None
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         Path(s.database_path).parent.mkdir(parents=True, exist_ok=True)
-        if snapshot:
-            snapshot.restore(s.database_path)
         conn = connect(s.database_path)
         try:
             init_db(conn)
@@ -134,12 +126,6 @@ def create_app(settings: Settings | None = None, paypal=None, sms=None, llm=None
         async with agent.session_manager.run():
             yield
         task.cancel()
-        if snapshot:
-            conn = connect(s.database_path)
-            try:
-                snapshot.save(conn)
-            finally:
-                conn.close()
 
     app = FastAPI(title="PalKova", lifespan=lifespan)
     app.state.settings = s
