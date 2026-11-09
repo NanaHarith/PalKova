@@ -28,7 +28,7 @@ export function pairs(rows: Basket[], top = TOP): { list: Pair[]; baskets: numbe
   return { list, baskets: multi };
 }
 
-export function baskets(rows: Basket[]): Map<string, Set<string>> {
+function baskets(rows: Basket[]): Map<string, Set<string>> {
   const out = new Map<string, Set<string>>();
   for (const r of rows) {
     if (!r.order || !r.dish) continue;

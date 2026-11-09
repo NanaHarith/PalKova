@@ -53,7 +53,7 @@ export default function Home() {
     const theme = document.querySelector('meta[name="theme-color"]');
     const was = theme?.getAttribute("content");
     theme?.setAttribute("content", "#0D4F52");
-    getLine().then(setLine).catch(() => setLine({ active: false, restaurant: "Kaveri Kitchen", ready_minutes: 20, busy: false }));
+    getLine().then(setLine).catch(() => setLine({ active: false, restaurant: "Kaveri Kitchen", ready_minutes: 20 }));
     getPublicMenu().then(setMenu).catch(() => setMenu([]));
     getConfig().then((c) => setClientId(c.paypal_client_id)).catch(() => {});
     return () => { if (was) theme?.setAttribute("content", was); };

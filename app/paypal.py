@@ -53,9 +53,8 @@ class PayPal:
             self._token, self._token_exp = data["access_token"], time.time() + data["expires_in"] - 60
         return f"Bearer {self._token}"
 
-    def request(self, method: str, path: str, json: dict | list | None = None, params: dict | None = None) -> dict:
-        r = self.http.request(method, f"{self.base_url}{path}", json=json, params=params,
-                              headers={"Authorization": self._auth()})
+    def request(self, method: str, path: str, json: dict | list | None = None) -> dict:
+        r = self.http.request(method, f"{self.base_url}{path}", json=json, headers={"Authorization": self._auth()})
         r.raise_for_status()
         return r.json() if r.content else {}
 

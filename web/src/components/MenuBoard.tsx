@@ -1,11 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { money, type PublicItem } from "../api";
+import { DIET, money, type PublicItem } from "../api";
 
 const ORDER = ["Starters", "Breads", "Drinks", "Mains", "Desserts"];
 const RIGHT = ["Mains", "Desserts"];  // the right-hand column: mains, with desserts beneath to even out the board
-const TAG: Record<string, string> = {
-  veg: "Veg", vegan: "Vegan", egg: "Egg", gluten: "Gluten", contains_dairy: "Dairy", contains_nuts: "Nuts",
-};
 
 /** The painted wall menu: rows letter in the first time the board scrolls into view. */
 export default function MenuBoard({ items }: { items: PublicItem[] | null }) {
@@ -48,7 +45,7 @@ export default function MenuBoard({ items }: { items: PublicItem[] | null }) {
                     {(i.dietary.length > 0 || i.spice_default === "hot") && (
                       <span className="dish-tags">
                         {i.spice_default === "hot" && <span className="tag tag-hot">Hot</span>}
-                        {i.dietary.map((d) => TAG[d] && <span className="tag" key={d}>{TAG[d]}</span>)}
+                        {i.dietary.map((d) => DIET[d] && <span className="tag" key={d}>{DIET[d]}</span>)}
                       </span>
                     )}
                   </p>

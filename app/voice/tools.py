@@ -1,5 +1,5 @@
-"""The assistant tools. Provider-neutral: the outside world is reached only through
-`push` (UI events) and `hangup`, so a pipeline or a hosted voice platform can call this class alike."""
+"""The voice assistant's tools. Provider-neutral: the outside world is reached only through
+`push` (UI events), `hangup` and `transfer`, so any voice platform can drive this class."""
 
 import asyncio
 import re

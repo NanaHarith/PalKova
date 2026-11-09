@@ -55,7 +55,7 @@ class CommandError(Exception):
 
 
 def _grid_tool(grid_schema: dict) -> dict:
-    # The toolkit schema's refs are root-relative (#/$defs/...), so its $defs must sit at our root (S6).
+    # The toolkit schema's refs are root-relative (#/$defs/...), so its $defs must sit at our root.
     grid_schema = dict(grid_schema)
     defs = grid_schema.pop("$defs", {})
     return {"type": "function", "function": {
@@ -155,7 +155,7 @@ def run_command(llm, model: str, paypal, conn: sqlite3.Connection, *, tz: str, g
                 jsonschema.validate(args, grid_tool["function"]["parameters"])
             except jsonschema.ValidationError:
                 raise CommandError("invalid_state")
-            # Derived here, not by the LLM: it listed features it had just changed (S6).
+            # Derived here, not by the LLM: it listed features it had just changed.
             ignore = [f for f in FEATURES if args["gridState"].get(f) is None]
             return {"kind": "grid", "state": args["gridState"], "propertiesToIgnore": ignore,
                     "explanation": args["explanation"]}

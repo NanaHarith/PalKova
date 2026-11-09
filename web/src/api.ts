@@ -30,7 +30,7 @@ export type MenuItem = {
 };
 export type Spice = "mild" | "medium" | "hot";
 
-export type LineState = { active: boolean; restaurant: string; ready_minutes: number; busy: boolean };
+export type LineState = { active: boolean; restaurant: string; ready_minutes: number };
 
 export class AuthError extends Error {}
 export class ApiError extends Error {
@@ -116,4 +116,9 @@ export type PayLink = {
 };
 export const getPayLink = (pid: string) => req<PayLink>(`/api/pay/${encodeURIComponent(pid)}`);
 
-export const money =(cents: number) => `$${(cents / 100).toFixed(2)}`;
+export const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
+// Dietary tags as the menu file stores them, in the words both menus show.
+export const DIET: Record<string, string> = {
+  veg: "Veg", vegan: "Vegan", egg: "Egg", gluten: "Gluten", contains_dairy: "Dairy", contains_nuts: "Nuts",
+};

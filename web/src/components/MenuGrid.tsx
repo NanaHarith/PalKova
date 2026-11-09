@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AgGridReact, type CustomCellRendererProps } from "ag-grid-react";
 import type { CellValueChangedEvent, ColDef, GridApi, RowClassParams, ValueParserParams } from "ag-grid-community";
-import { ApiError, AuthError, getMenu, patchMenu, type MenuItem, money, type Spice } from "../api";
+import { ApiError, AuthError, DIET, getMenu, patchMenu, type MenuItem, money, type Spice } from "../api";
 import type { AgChartTheme } from "ag-charts-types";
 import { emptyOverlays, theme } from "./KitchenBoard";
 import CommandBar from "./CommandBar";
@@ -13,15 +13,12 @@ type Stock = "in" | "low" | "out" | "off";
 const stock = (m: MenuItem): Stock =>
   !m.available ? "off" : m.remaining === 0 ? "out" : m.remaining <= 0.2 * m.par_level ? "low" : "in";
 const STOCK_WORD: Record<Exclude<Stock, "in">, string> = { low: "Low", out: "Sold out", off: "Off menu" };
-const DIET: Record<string, string> = {
-  veg: "Veg", vegan: "Vegan", egg: "Egg", gluten: "Gluten", contains_dairy: "Dairy", contains_nuts: "Nuts",
-};
 const diet = (m: MenuItem) => m.dietary.map((d) => DIET[d] ?? d).join(" · ");
 const spiceWord = (s: Spice | null) => (s ? s[0].toUpperCase() + s.slice(1) : "None");
 const hour = (h: number) => new Date(2000, 0, 1, h).toLocaleTimeString([], { hour: "numeric" });
 
 /** "12.5", "$12.50" → 1250; anything else → null. The server checks again. */
-export function parsePrice(text: string): number | null {
+function parsePrice(text: string): number | null {
   const m = /^\$?\s*(\d{1,4})(?:\.(\d{1,2}))?$/.exec(text.trim());
   if (!m) return null;
   const cents = Number(m[1]) * 100 + Number((m[2] ?? "").padEnd(2, "0"));

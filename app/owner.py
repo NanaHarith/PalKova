@@ -224,7 +224,7 @@ async def events():
 def line(request: Request):
     with _db(request) as conn:
         return {"active": line_is_active(conn), "restaurant": restaurant()["name"],
-                "ready_minutes": restaurant()["ready_minutes"], "busy": request.app.state.call_slots.full}
+                "ready_minutes": restaurant()["ready_minutes"]}
 
 
 @router.get("/api/public/menu")

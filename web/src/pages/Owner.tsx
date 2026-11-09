@@ -21,7 +21,7 @@ const ALERT_WORDS: Record<string, string> = {
 };
 const RANGES = [{ days: 1, label: "Today" }, { days: 7, label: "7 days" }, { days: 30, label: "30 days" }];
 type View = "orders" | "menu" | "takings";
-const ACTION_WORDS: Record<Action, string> ={ ready: "mark ready", picked_up: "mark picked up", cancel: "cancel" };
+const ACTION_WORDS: Record<Action, string> = { ready: "mark ready", picked_up: "mark picked up", cancel: "cancel" };
 
 export default function Owner({ onSignedOut }: { onSignedOut: () => void }) {
   const [rows, setRows] = useState<Order[] | null>(null);
@@ -162,7 +162,7 @@ export default function Owner({ onSignedOut }: { onSignedOut: () => void }) {
           {line && (
             <button className={`pill pill-btn ${line.active ? "pill-on" : "pill-off"}`} aria-expanded={panel}
               aria-controls="line-panel" title="Subscription" onClick={() => setPanel((p) => !p)}>
-<span><span className="pill-long">Ordering line</span><span className="pill-short">Line</span> {line.active ? "on" : "off"}</span>
+              <span><span className="pill-long">Ordering line</span><span className="pill-short">Line</span> {line.active ? "on" : "off"}</span>
             </button>
           )}
           <span className={`pill ${feed === "live" ? "pill-on" : "pill-warn"}`} aria-live="polite">

@@ -31,8 +31,14 @@ INSTRUCTIONS = (
     "confirm the dishes, quantities and the name for pickup"
     + (f" (default: {CUSTOMER_NAME})" if CUSTOMER_NAME else "")
     + ". After create_order, send the order number, the total and the payment_url exactly as returned, and say "
-    "you will message them once it is paid with the time it will be ready. Orders are pickup only."
+    "you will message them once it is paid with the time it will be ready. Orders are pickup only. Each message "
+    "starts with the current time in brackets; use it for anything about opening hours."
 )
+# xAI hands Grok only the tool list, not the server's instructions (hours, address, pickup), so pass them on.
+INSTRUCTIONS += " About the restaurant: " + httpx.post(MCP_URL, timeout=30, headers={"Accept": "application/json, text/event-stream"}, json={
+    "jsonrpc": "2.0", "id": 1, "method": "initialize",
+    "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "meal-buddy", "version": "1"}},
+}).json()["result"].get("instructions", "")
 
 xai = httpx.Client(base_url="https://api.x.ai/v1", timeout=180,
                    headers={"Authorization": f"Bearer {os.environ['XAI_API_KEY']}"})
@@ -50,7 +56,8 @@ home: discord.abc.Messageable | None = None  # where the bot talks: the owner's 
 def ask_grok(text: str) -> tuple[str, set[str]]:
     """One turn on the running conversation; returns the reply and the ids of any orders Grok created."""
     global last_response_id
-    body = {"model": MODEL, "input": [{"role": "user", "content": text}],
+    now = datetime.now(TZ).strftime("%a %I:%M %p %Z")
+    body = {"model": MODEL, "input": [{"role": "user", "content": f"[{now}] {text}"}],
             "tools": [{"type": "mcp", "server_url": MCP_URL, "server_label": "kaveri_kitchen"}]}
     with grok_lock:
         # xAI rejects `instructions` with previous_response_id; a system message in the first turn stays in the thread.
@@ -99,7 +106,7 @@ async def watch_order(order_id: str) -> None:
         try:
             s = await asyncio.to_thread(order_status, order_id)
         except (httpx.HTTPError, KeyError, ValueError):
-            await asyncio.sleep(20)  # a sleeping free-tier host can take a while to wake
+            await asyncio.sleep(20)
             continue
         status, number = s.get("status"), s.get("order_number", "")
         if status in ("paid", "ready", "picked_up"):

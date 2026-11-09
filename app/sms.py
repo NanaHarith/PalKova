@@ -29,12 +29,3 @@ class Sms:
         except Exception:  # Twilio API errors and transport errors alike; never raise into capture
             log.exception("sms send failed")
             return None
-
-    def redirect_call(self, call_sid: str, twiml: str) -> bool:
-        """Swap a live call onto new TwiML. Lives here because this class is the app's one Twilio client."""
-        try:
-            self.client.calls(call_sid).update(twiml=twiml)
-            return True
-        except Exception:  # never raise into a live call
-            log.exception("call redirect failed")
-            return False

@@ -11,7 +11,7 @@ export type BoardContext = { readyMinutes: number; now: number; arrivedAt: Map<s
 const RANK: Record<Status, number> = {
   paid: 0, capturing: 1, capture_pending: 1, ready: 2, pending_payment: 3, picked_up: 4, cancelled: 5, expired: 6,
 };
-export const STATUS_WORD: Record<Status, string> = {
+const STATUS_WORD: Record<Status, string> = {
   pending_payment: "Awaiting payment", capturing: "Payment processing", capture_pending: "Payment processing",
   paid: "Paid · cook", ready: "Ready", picked_up: "Picked up", cancelled: "Cancelled", expired: "Expired",
 };
@@ -37,7 +37,7 @@ export const liveAlerts = (o: Order) => {
 /** Mirrors the server's fully_refunded: a refund with no recorded amount was a full one. */
 const refunded = (o: Order) =>
   !!o.flags.alerts?.includes("capture_refunded") && o.paid_cents !== null && (o.flags.refunded_cents ?? o.paid_cents) >= o.paid_cents;
-export const flagged = (o: Order) => liveAlerts(o).length > 0;
+const flagged = (o: Order) => liveAlerts(o).length > 0;
 const alertLabel = (o: Order) => {
   const a = liveAlerts(o);
   return a.includes("capture_refunded") ? "Refunded" : a.includes("capture_reversed") ? "Reversed" : "Check payment";
