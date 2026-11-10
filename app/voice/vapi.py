@@ -112,8 +112,16 @@ def assistant_config(s, items: list[dict], sold_out: list[dict], channel: str = 
                   "tools": [{"type": "function", "function": t["function"],
                              "messages": [{"type": "request-start", "content": ""}]} for t in schemas]},
         "voice": {"provider": "vapi", "voiceId": "Naina"},
-        "transcriber": {"provider": "deepgram", "model": "nova-3", "language": "en",
-                        "keyterm": [r["name"], *(i["name"] for i in items)]},
+        # confidenceThreshold drops faint words picked up from background noise
+        "transcriber": {"provider": "deepgram", "model": "nova-3", "language": "en", "confidenceThreshold": 0.5,
+                        "keyterm": [r["name"], "bread", "naan", "roti", *(i["name"] for i in items)]},
+        "backgroundSpeechDenoisingPlan": {"smartDenoisingPlan": {"enabled": True}},
+        # a noise or a one-word "mm-hm" no longer cuts the assistant off mid-sentence
+        "stopSpeakingPlan": {"numWords": 2, "voiceSeconds": 0.3, "backoffSeconds": 1},
+        # a caller paying by link goes quiet: check in at 30 s, hang up only after two minutes of silence
+        "messagePlan": {"idleMessages": ["Are you still there?"], "idleTimeoutSeconds": 30,
+                        "idleMessageMaxSpokenCount": 2},
+        "silenceTimeoutSeconds": 120,
         "maxDurationSeconds": MAX_CALL_SECONDS,
         "server": {"url": s.public_base_url.rstrip("/") + WEBHOOK_PATH,
                    "headers": {SECRET_HEADER: s.vapi_webhook_secret}},
