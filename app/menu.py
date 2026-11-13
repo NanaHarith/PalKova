@@ -50,10 +50,11 @@ def today_bounds_utc(tz: str, now: datetime | None = None) -> tuple[str, str]:
 
 def sold_today(conn: sqlite3.Connection, tz: str, now: datetime | None = None) -> dict[str, int]:
     start, end = today_bounds_utc(tz, now)
-    # money in flight (capturing, capture_pending) holds stock until it settles or reverts
+    # Money in flight (capturing, capture_pending; no paid_at yet) holds stock on the day it was placed, until it
+    # settles or reverts. A capture stuck in review from an earlier day must not eat into today's par.
     rows = conn.execute(
-        "SELECT items FROM orders WHERE (status IN ('paid','ready','picked_up')"
-        " AND paid_at >= ? AND paid_at < ?) OR status IN ('capturing','capture_pending')",
+        "SELECT items FROM orders WHERE status IN ('paid','ready','picked_up','capturing','capture_pending')"
+        " AND COALESCE(paid_at, created_at) >= ? AND COALESCE(paid_at, created_at) < ?",
         (start, end),
     ).fetchall()
     sold: dict[str, int] = {}
