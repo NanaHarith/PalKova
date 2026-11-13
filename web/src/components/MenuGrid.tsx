@@ -212,10 +212,24 @@ export default function MenuGrid({ version, onNotice, onSignedOut }: {
   };
 
   const counts = (rows ?? []).reduce((c, m) => ({ ...c, [stock(m)]: c[stock(m)] + 1 }), { in: 0, low: 0, out: 0, off: 0 });
-  const chartSold = () => api.current?.createRangeChart({
-    cellRange: { columns: ["name", "sold_today"] }, chartType: "groupedBar", chartThemeName: "palkova",
-    chartThemeOverrides: { common: { title: { enabled: true, text: "Sold today", fontFamily: "Barlow", fontWeight: 600 } } },
-  });
+  // Only the dishes that sold, best seller first: with all 31 the axis hides every other name and bars sit
+  // beside the wrong dish. The grid sorts to match, so the highlighted range is what the chart shows.
+  const chartSold = () => {
+    const g = api.current;
+    if (!g) return;
+    g.applyColumnState({ state: [{ colId: "sold_today", sort: "desc" }], defaultState: { sort: null } });
+    let sold = 0;
+    g.forEachNodeAfterFilterAndSort((r) => { if (r.data!.sold_today > 0) sold++; });
+    if (!sold) return onNotice("Nothing has sold today yet.");
+    g.createRangeChart({
+      cellRange: { rowStartIndex: 0, rowEndIndex: sold - 1, columns: ["name", "sold_today"] },
+      chartType: "groupedBar", chartThemeName: "palkova",
+      chartThemeOverrides: {
+        common: { title: { enabled: true, text: "Sold today", fontFamily: "Barlow", fontWeight: 600 } },
+        bar: { axes: { number: { interval: { step: 1 } } } },  // whole dishes, never 0.5
+      },
+    });
+  };
 
   if (rows === null) return <div className="loading">Loading the menu…</div>;
   return (
